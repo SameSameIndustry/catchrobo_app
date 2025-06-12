@@ -36,3 +36,50 @@
     transform: rotate(360deg);
   }
 }
+
+.control-panel {
+  margin: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.control-panel input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+}
+
+.control-panel button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 5px;
+  color: #282c34;
+  font-weight: bold;
+}
+
+.control-panel button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.response-panel {
+  margin-top: 20px;
+  text-align: left;
+  background-color: #f0f0f0;
+  color: #282c34;
+  padding: 15px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 600px;
+  white-space: pre-wrap; /* 改行を有効にする */
+  word-wrap: break-word; /* 長い文字列を折り返す */
+}
+
+.response-panel pre {
+  margin: 0;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
