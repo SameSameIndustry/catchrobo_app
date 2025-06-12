@@ -9,7 +9,7 @@ import (
 
     "github.com/tiiuae/rclgo/pkg/rclgo"
     // ↓↓↓ あなたのモジュール名に合わせます。go.modファイルで確認してください。
-    // "catchrobo_app/msgs/std_msgs/msg"
+    std_msgs "catchrobo_app/msgs/std_msgs/msg" // これがないとrcl-goしたときにmsgsが生成されない
 )
 
 func main() {
@@ -21,11 +21,11 @@ func main() {
     }
 
     node, _ := rclgo.NewNode("my_publisher", "")
-    pub, _ := node.NewPublisher("/chatter", &msg.String{})
+    pub, _ := node.NewPublisher("/chatter", &std_msgs.String{})
 
     fmt.Println("Publisher created. Starting to send messages.")
     for i := 0; ; i++ {
-        rosMsg := msg.String{Data: fmt.Sprintf("Hello from Go - %d", i)}
+        rosMsg := std_msgs.String{Data: fmt.Sprintf("Hello from Go - %d", i)}
         pub.Publish(rosMsg.ToRos())
         time.Sleep(1 * time.Second)
     }

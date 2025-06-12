@@ -3,4 +3,6 @@
 package msgs
 
 import (
+	_ "catchrobo_app/msgs/builtin_interfaces/msg" //
+	_ "catchrobo_app/msgs/std_msgs/msg" //
 )
