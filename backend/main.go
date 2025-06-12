@@ -1,21 +1,32 @@
+// main.go (この内容で完全に上書きしてください)
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+    "context"
+    "fmt"
+    "os"
+    "time"
+
+    "github.com/tiiuae/rclgo/pkg/rclgo"
+    // ↓↓↓ あなたのモジュール名に合わせます。go.modファイルで確認してください。
+    // "catchrobo_app/msgs/std_msgs/msg"
 )
 
 func main() {
-	//Ginフレームワークのデフォルトの設定を使用してルータを作成
-	router := gin.Default()
-	
-	// ルートハンドラの定義
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Hello, World!",
-		})
-	})
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+    if err := rclgo.Init(ctx); err != nil {
+        fmt.Println("Failed to init rclgo:", err)
+        os.Exit(1)
+    }
 
-	// サーバー起動
-	router.Run(":8080")
+    node, _ := rclgo.NewNode("my_publisher", "")
+    pub, _ := node.NewPublisher("/chatter", &msg.String{})
+
+    fmt.Println("Publisher created. Starting to send messages.")
+    for i := 0; ; i++ {
+        rosMsg := msg.String{Data: fmt.Sprintf("Hello from Go - %d", i)}
+        pub.Publish(rosMsg.ToRos())
+        time.Sleep(1 * time.Second)
+    }
 }
-

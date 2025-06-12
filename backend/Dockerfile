@@ -1,54 +1,51 @@
-# # ステージ1: ビルド用ステージ
-# # Goの公式イメージをベースにする
-# FROM golang:1.22-alpine AS builder
+# rclgoはros2のインストールが必須
+# ステージ1: ROS2環境とrclgoの依存関係をビルド
+FROM ros:humble-ros-base AS builder
 
-# # 作業ディレクトリを設定
-# WORKDIR /app
+# 必要なツールをインストール
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential
 
-# # go.modとgo.sumをコピーして、依存関係を先にダウンロード
-# COPY go.mod ./
-# RUN go mod download
+# rclgoをクローンしてビルド
+WORKDIR /opt/rclgo_ws
+RUN git clone https://github.com/tiiuae/rclgo.git src/rclgo
+RUN . /opt/ros/humble/setup.sh && colcon build --symlink-install
 
-# # アプリケーションのソースコードをコピー
-# COPY . .
+# ステージ2: Goアプリケーションのビルド
+FROM golang:1.21 AS go-builder
 
-# # アプリケーションをビルド。CGO_ENABLED=0 は静的リンクバイナリを生成するため
-# RUN CGO_ENABLED=0 GOOS=linux go build -o /go-catchrobo-app .
+# ビルダーからROS2とrclgoの環境をコピー5.1 
+COPY --from=builder /opt/ros/humble /opt/ros/humble
+COPY --from=builder /opt/rclgo_ws /opt/rclgo_ws
 
-# # ステージ2: 実行用ステージ
-# # 軽量なAlpine Linuxイメージをベースにする
-# FROM alpine:latest
-
-# # 作業ディレクトリを設定
-# WORKDIR /
-
-# # ビルド用ステージから、ビルド済みのバイナリのみをコピー
-# COPY --from=builder /go-catchrobo-app /go-catchrobo-app
-
-# # アプリケーションが使用するポートを公開
-# EXPOSE 8080
-
-# # コンテナ起動時に実行するコマンド
-# CMD [ "/go-catchrobo-app" ]
-
-
-# ベースイメージを指定
-FROM golang:latest
-
-# コンテナ内の作業ディレクトリを設定
+# Goモジュールの依存関係を解決
 WORKDIR /app
-
-# ローカルのソースコードをコンテナにコピー
-COPY . .
-
-# 必要なパッケージをインストール
+COPY go.mod ./
+COPY go.sum ./
 RUN go mod download
 
-# アプリケーションをビルド
-RUN go build -o main .
+# ソースコードをコピーしてビルド
+COPY *.go ./
+RUN . /opt/ros/humble/setup.sh && \
+    . /opt/rclgo_ws/install/setup.sh && \
+    CGO_ENABLED=1 go build -o /main .
 
-# 公開予定のコンテナのポートを明示
-EXPOSE 8080
+# ステージ3: 最終的な実行イメージ
+FROM ros:humble-ros-core
 
-# アプリケーションを実行
-CMD ["go", "run", "main.go"]
+# 必要なライブラリと証明書をコピー
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
+COPY --from=builder /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
+
+# ROS2とrclgo環境をコピー
+COPY --from=builder /opt/ros/humble /opt/ros/humble
+COPY --from=builder /opt/rclgo_ws/install /opt/rclgo_ws/install
+
+# ビルドしたGoバイナリをコピー
+COPY --from=go-builder /main /main
+
+# ROS2環境をセットアップし、アプリケーションを実行
+CMD . /opt/ros/humble/setup.sh && . /opt/rclgo_ws/setup.sh && /main
