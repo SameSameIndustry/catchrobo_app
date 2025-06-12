@@ -2,12 +2,13 @@ package robot
 // controllerはginに依存しないように書く
 import (
 	"context"
-
+	"os/signal"
+	"syscall"
+	
 	// 生成したメッセージパッケージをインポート
 	std_msgs "catchrobo_app/msgs/std_msgs/msg"
 
 	"github.com/tiiuae/rclgo/pkg/rclgo"
-	"github.com/tiiuae/rclgo/pkg/rclgo/types"
 )
 
 // RobotController はROSノードとPublisherを保持します
@@ -18,9 +19,10 @@ type RobotController struct {
 
 // NewController はROSノードとPublisherを初期化し、コントローラーを作成します
 func NewController(ctx context.Context) (*RobotController, error) {
-	// ROSノードを作成
-	opts := rclgo.NewDefaultNodeOptions(rclgo.WithContext(ctx))
-	node, err := rclgo.NewNode("robot_controller_backend", "", opts)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	// nodeを初期化
+	node, err := rclgo.NewNode("web_app_backend", "")
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +39,7 @@ func NewController(ctx context.Context) (*RobotController, error) {
 		chatterPub: pub,
 	}, nil
 }
+
 
 // SendCommand は受け取った文字列を /chatter トピックに発行します
 func (rc *RobotController) SendCommand(command string) error {
@@ -56,4 +59,6 @@ func (rc *RobotController) Close() {
 	if rc.node != nil {
 		rc.node.Close()
 	}
+
+
 }
