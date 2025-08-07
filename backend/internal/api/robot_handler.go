@@ -42,3 +42,50 @@ func (h *RobotHandler) SendCommand(c *gin.Context) {
 	// 成功レスポンスを返す
 	c.JSON(http.StatusOK, gin.H{"status": "command sent", "command": req.Command})
 }
+
+// SendCommand はフロントエンドからのコマンド要求を処理します
+func (h *RobotHandler) SendPositionCommand(c *gin.Context) {
+	// リクエストのJSONボディを定義
+	type CommandRequest struct {
+		Command string `json:"command" binding:"required"`
+	}
+
+	var req CommandRequest
+	// JSONをGoの構造体にバインド（マッピング）します
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		return
+	}
+
+	// RobotControllerのメソッドを呼び出してROSに命令を送る
+	if err := h.controller.SendPositionCommand(req.Command); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send command to robot"})
+		return
+	}
+
+	// 成功レスポンスを返す
+	c.JSON(http.StatusOK, gin.H{"status": "command sent", "command": req.Command})
+}
+// SendMoveCommand はフロントエンドからのコマンド要求を処理します
+func (h *RobotHandler) SendMoveCommand(c *gin.Context) {
+	// リクエストのJSONボディを定義
+	type CommandRequest struct {
+		Command string `json:"command" binding:"required"`
+	}
+
+	var req CommandRequest
+	// JSONをGoの構造体にバインド（マッピング）します
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		return
+	}
+
+	// RobotControllerのメソッドを呼び出してROSに命令を送る
+	if err := h.controller.SendMoveCommand(req.Command); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send command to robot"})
+		return
+	}
+
+	// 成功レスポンスを返す
+	c.JSON(http.StatusOK, gin.H{"status": "command sent", "command": req.Command})
+}

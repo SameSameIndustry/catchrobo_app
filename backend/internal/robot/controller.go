@@ -15,6 +15,7 @@ import (
 type RobotController struct {
 	node       *rclgo.Node
 	chatterPub *rclgo.Publisher
+	positionPub *rclgo.Publisher
 }
 
 // NewController はROSノードとPublisherを初期化し、コントローラーを作成します
@@ -34,9 +35,22 @@ func NewController(ctx context.Context) (*RobotController, error) {
 		return nil, err
 	}
 
+	// 位置情報をパブリッシュするためのPublisherを作成
+	posPub, err := node.NewPublisher("/position", std_msgs.StringTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	movePub, err := node.NewPublisher("/move", std_msgs.StringTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	return &RobotController{
 		node:       node,
 		chatterPub: pub,
+		positionPub: posPub,
+		movePub:    movePub,
 	}, nil
 }
 
@@ -49,6 +63,26 @@ func (rc *RobotController) SendCommand(command string) error {
 	// ログを出力し、メッセージをパブリッシュ
 	rc.node.Logger().Info("Publishing command: " + command)
 	return rc.chatterPub.Publish(&rosMsg)
+}
+
+// SendPositionCommand は受け取った位置情報を /position トピックに発行します
+func (rc *RobotController) SendPositionCommand(position string) error {
+	// 送信するメッセージを作成
+	rosMsg := std_msgs.String{Data: position}
+
+	// ログを出力し、メッセージをパブリッシュ
+	rc.node.Logger().Info("Publishing position: " + position)
+	return rc.positionPub.Publish(&rosMsg)
+}
+
+// SendMoveCommand は受け取った移動情報を /move トピックに発行します
+func (rc *RobotController) SendMoveCommand(move string) error {
+	// 送信するメッセージを作成
+	rosMsg := std_msgs.String{Data: move}
+
+	// ログを出力し、メッセージをパブリッシュ
+	rc.node.Logger().Info("Publishing move command: " + move)
+	return rc.movePub.Publish(&rosMsg)
 }
 
 // Close はROSノードをクリーンに終了させます
