@@ -1,0 +1,19 @@
+// frontend/src/types/index.ts
+
+/**
+ * 座標を表すインターフェース
+ * (例: { "x": 120.5, "y": 88.0 })
+ */
+export interface Position {
+  x: number;
+  y: number;
+}
+
+/**
+ * 変位量を表すインターフェース
+ * (例: { "dx": 0.5, "dy": -0.2 })
+ */
+export interface Displacement {
+  dx: number; // x方向の移動量
+  dy: number; // y方向の移動量
+}

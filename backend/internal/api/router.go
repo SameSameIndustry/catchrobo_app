@@ -20,6 +20,7 @@ func SetupRouter(rc *robot.RobotController) *gin.Engine {
 	{
 		// この中にいろんなAPIエンドポイントを定義する
 		api.POST("/command", robotHandler.SendCommand)
+		
 	}
 
 	return r

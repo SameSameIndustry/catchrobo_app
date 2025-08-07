@@ -83,3 +83,11 @@
   margin: 0;
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+/* frontend/src/App.css に追記 */
+.main-interface {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}

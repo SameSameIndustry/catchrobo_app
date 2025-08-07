@@ -1,0 +1,13 @@
+/* frontend/src/components/RobotField.css */
+.robot-field-container {
+  border: 1px solid #61dafb;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.robot-field-image {
+  max-width: 100%;
+  height: auto;
+  cursor: pointer;
+  background-color: #fff; /* 画像が透過の場合の背景色 */
+}
