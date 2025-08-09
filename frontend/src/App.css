@@ -13,13 +13,14 @@
   }
 }
 
+/* .App-header を変更して、タブバーを下部に配置できるようにする */
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 要素を縦に並べる */
   align-items: center;
-  justify-content: center;
+  justify-content: space-between; /* 上部と下部に要素を寄せる */
   font-size: calc(10px + 2vmin);
   color: white;
 }
@@ -90,4 +91,49 @@
   flex-direction: column;
   gap: 20px;
   align-items: center;
+}
+
+/* コンテンツ表示領域のスタイル */
+.content-area {
+  flex-grow: 1; /* 残りのスペースをすべて埋める */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* --- ここから下を追記 --- */
+
+/* タブバー全体のスタイル */
+.tab-bar {
+  display: flex;
+  width: 100%;
+  background-color: #20232a;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 各タブボタンのスタイル */
+.tab-button {
+  flex-grow: 1; /* スペースを均等に分ける */
+  padding: 15px 20px;
+  background-color: transparent;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-top: 3px solid transparent; /* 非アクティブ時のボーダー */
+}
+
+/* マウスが乗った時のスタイル */
+.tab-button:hover {
+  background-color: #333740;
+}
+
+/* アクティブなタブボタンのスタイル */
+.tab-button.active {
+  color: #61dafb;
+  border-top: 3px solid #61dafb; /* アクティブなタブを示すボーダー */
 }
