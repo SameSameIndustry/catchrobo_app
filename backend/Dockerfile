@@ -1,51 +1,40 @@
-# rclgoはros2のインストールが必須
-# ステージ1: ROS2環境とrclgoの依存関係をビルド
+# ステージ1: ROS2 + rclgo ビルド
 FROM ros:humble-ros-base AS builder
 
-# 必要なツールをインストール
-RUN apt-get update && apt-get install -y \
-    git \
-    cmake \
-    build-essential
-
-# rclgoをクローンしてビルド
+RUN apt-get update && apt-get install -y git cmake build-essential curl
 WORKDIR /opt/rclgo_ws
 RUN git clone https://github.com/tiiuae/rclgo.git src/rclgo
 RUN . /opt/ros/humble/setup.sh && colcon build --symlink-install
 
-# ステージ2: Goアプリケーションのビルド
-FROM golang:1.21 AS go-builder
+# ステージ2: GoをROSイメージに導入してビルド（同一OSなのでABI不一致なし）
+FROM ros:humble-ros-base AS go-builder
+# Go 1.22 を導入（公式tarball）
+ARG GOVERSION=1.22.12
+RUN curl -fsSL https://go.dev/dl/go${GOVERSION}.linux-amd64.tar.gz \
+  | tar -C /usr/local -xz
+ENV PATH=/usr/local/go/bin:$PATH
+ENV GOTOOLCHAIN=auto \
+    LD_LIBRARY_PATH=/opt/ros/humble/lib:/opt/rclgo_ws/install/lib:$LD_LIBRARY_PATH
 
-# ビルダーからROS2とrclgoの環境をコピー5.1 
+# ROSとrclgoをコピー
 COPY --from=builder /opt/ros/humble /opt/ros/humble
 COPY --from=builder /opt/rclgo_ws /opt/rclgo_ws
 
-# Goモジュールの依存関係を解決
 WORKDIR /app
-COPY go.mod ./
-COPY go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
+COPY . .
 
-# ソースコードをコピーしてビルド
-COPY *.go ./
+# 必要ならビルド対象を合わせて
 RUN . /opt/ros/humble/setup.sh && \
     . /opt/rclgo_ws/install/setup.sh && \
-    CGO_ENABLED=1 go build -o /main .
+    CGO_ENABLED=1 go build -o /main ./cmd/service
 
-# ステージ3: 最終的な実行イメージ
-FROM ros:humble-ros-core
-
-# 必要なライブラリと証明書をコピー
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
-COPY --from=builder /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
-
-# ROS2とrclgo環境をコピー
-COPY --from=builder /opt/ros/humble /opt/ros/humble
-COPY --from=builder /opt/rclgo_ws/install /opt/rclgo_ws/install
-
-# ビルドしたGoバイナリをコピー
-COPY --from=go-builder /main /main
-
-# ROS2環境をセットアップし、アプリケーションを実行
-CMD . /opt/ros/humble/setup.sh && . /opt/rclgo_ws/setup.sh && /main
+# ステージ3: ランタイム
+FROM ros:humble-ros-base
+# 余計なライブラリの手動コピーは不要（同じベースなのでOK）
+COPY --from=builder   /opt/ros/humble          /opt/ros/humble
+COPY --from=builder   /opt/rclgo_ws/install    /opt/rclgo_ws/install
+COPY --from=go-builder /main                   /main
+ENV LD_LIBRARY_PATH=/opt/ros/humble/lib:/opt/rclgo_ws/install/lib:$LD_LIBRARY_PATH
+CMD . /opt/ros/humble/setup.sh && . /opt/rclgo_ws/install/setup.sh && /main

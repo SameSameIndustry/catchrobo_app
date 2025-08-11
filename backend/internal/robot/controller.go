@@ -1,10 +1,12 @@
 package robot
+
 // controllerはginに依存しないように書く
 import (
 	"context"
+	"fmt"
 	"os/signal"
 	"syscall"
-	
+
 	// 生成したメッセージパッケージをインポート
 	std_msgs "catchrobo_app/msgs/std_msgs/msg"
 
@@ -16,6 +18,7 @@ type RobotController struct {
 	node       *rclgo.Node
 	chatterPub *rclgo.Publisher
 	positionPub *rclgo.Publisher
+	movePub	*rclgo.Publisher
 }
 
 // NewController はROSノードとPublisherを初期化し、コントローラーを作成します
@@ -83,6 +86,35 @@ func (rc *RobotController) SendMoveCommand(move string) error {
 	// ログを出力し、メッセージをパブリッシュ
 	rc.node.Logger().Info("Publishing move command: " + move)
 	return rc.movePub.Publish(&rosMsg)
+}
+
+func (rc *RobotController) GetTopics() ([]string, error) {
+	// 現在のトピックを取得
+	topics, err := rc.node.GetTopicNamesAndTypes(true)
+	if err != nil {
+		return nil, err
+	}
+
+	// トピック名のリストを返す
+	var topicNames []string
+	for name := range topics {
+		topicNames = append(topicNames, name)
+	}
+	return topicNames, nil
+}
+
+func (rc *RobotController) Get(topic_name string) (*rclgo.Publisher, error) {
+	
+	switch topic_name {
+	case "/chatter":
+		return rc.chatterPub, nil
+	case "/position":
+		return rc.positionPub, nil
+	case "/move":
+		return rc.movePub, nil
+	default:
+		return nil, fmt.Errorf("unknown topic: %s", topic_name)
+	}
 }
 
 // Close はROSノードをクリーンに終了させます

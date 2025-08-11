@@ -89,3 +89,16 @@ func (h *RobotHandler) SendMoveCommand(c *gin.Context) {
 	// 成功レスポンスを返す
 	c.JSON(http.StatusOK, gin.H{"status": "command sent", "command": req.Command})
 }
+
+// GetTopics は利用可能なトピックのリストを取得します
+func (h *RobotHandler) GetTopics(c *gin.Context) {
+	// RobotControllerのメソッドを呼び出してトピックのリストを取得
+	topics, err := h.controller.GetTopics()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve topics"})
+		return
+	}
+
+	// トピックのリストをJSONレスポンスとして返す
+	c.JSON(http.StatusOK, gin.H{"topics": topics})
+}

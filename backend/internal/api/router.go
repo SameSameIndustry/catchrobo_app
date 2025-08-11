@@ -22,7 +22,7 @@ func SetupRouter(rc *robot.RobotController) *gin.Engine {
 		api.POST("/command", robotHandler.SendCommand)
 		api.POST("/position", robotHandler.SendCommand)
 		api.POST("/move", robotHandler.SendCommand)
-
+		api.GET("/topics", robotHandler.GetTopics)
 	}
 
 	return r
