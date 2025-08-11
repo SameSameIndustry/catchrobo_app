@@ -24,6 +24,8 @@ func SetupRouter(rc *robot.RobotController) *gin.Engine {
 		api.POST("/move", robotHandler.SendCommand)
 		api.GET("/topics", robotHandler.GetTopics)
 	}
+	// 追加のエンドポイントを設定
+	r.GET("/", robotHandler.Hello)
 
 	return r
 }

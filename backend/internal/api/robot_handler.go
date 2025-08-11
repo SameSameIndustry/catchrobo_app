@@ -102,3 +102,8 @@ func (h *RobotHandler) GetTopics(c *gin.Context) {
 	// トピックのリストをJSONレスポンスとして返す
 	c.JSON(http.StatusOK, gin.H{"topics": topics})
 }
+
+func (h *RobotHandler) Hello(c *gin.Context) {
+	// シンプルなHelloレスポンスを返す
+	c.JSON(http.StatusOK, gin.H{"message": "Hello from Robot API!"})
+}
