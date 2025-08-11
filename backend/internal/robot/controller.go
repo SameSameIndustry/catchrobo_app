@@ -68,6 +68,30 @@ func (rc *RobotController) SendCommand(command string) error {
 	return rc.chatterPub.Publish(&rosMsg)
 }
 
+func (rc *RobotController) PublishPosition(x, y float64) error {
+    if rc == nil || rc.node == nil { return fmt.Errorf("node not initialized") }
+    if rc.positionPub == nil { return fmt.Errorf("position publisher not initialized") }
+    // 送信するメッセージを作成
+	// TODO std_msgs.Stringではなく、位置情報用のメッセージを使う
+	rosMsg := std_msgs.String{Data: fmt.Sprintf("Position: (%.2f, %.2f)", x, y)}
+
+	// ログを出力し、メッセージをパブリッシュ
+	rc.node.Logger().Info("Publishing position: " + rosMsg.Data)
+	return rc.positionPub.Publish(&rosMsg)
+}
+
+func (rc *RobotController) PublishMove(dx, dy float64) error {
+    if rc == nil || rc.node == nil { return fmt.Errorf("node not initialized") }
+    if rc.movePub == nil { return fmt.Errorf("move publisher not initialized") }
+    /// 送信するメッセージを作成
+	// TODO std_msgs.Stringではなく、移動情報用のメッセージを使う
+	rosMsg := std_msgs.String{Data: fmt.Sprintf("Move: (%.2f, %.2f)", dx, dy)}
+
+	// ログを出力し、メッセージをパブリッシュ
+	rc.node.Logger().Info("Publishing move command: " + rosMsg.Data)
+	return rc.movePub.Publish(&rosMsg)
+}
+
 // SendPositionCommand は受け取った位置情報を /position トピックに発行します
 func (rc *RobotController) SendPositionCommand(position string) error {
 	// 送信するメッセージを作成
@@ -88,7 +112,7 @@ func (rc *RobotController) SendMoveCommand(move string) error {
 	return rc.movePub.Publish(&rosMsg)
 }
 
-func (rc *RobotController) GetTopics() ([]string, error) {
+func (rc *RobotController) SubscribeTopics() ([]string, error) {
 	// 現在のトピックを取得
 	topics, err := rc.node.GetTopicNamesAndTypes(true)
 	if err != nil {

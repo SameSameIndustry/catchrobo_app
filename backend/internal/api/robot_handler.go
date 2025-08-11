@@ -19,81 +19,61 @@ func NewRobotHandler(rc *robot.RobotController) *RobotHandler {
 	return &RobotHandler{controller: rc}
 }
 
-// SendCommand はフロントエンドからのコマンド要求を処理します
+// internal/api/robot_handler.go
+type PositionReq struct {
+    X float64 `json:"x"`
+    Y float64 `json:"y"`
+}
+type DisplacementReq struct {
+    Dx float64 `json:"dx"`
+    Dy float64 `json:"dy"`
+}
+
+// そのまま command 文字列を扱う用途
 func (h *RobotHandler) SendCommand(c *gin.Context) {
-	// リクエストのJSONボディを定義
-	type CommandRequest struct {
-		Command string `json:"command" binding:"required"`
-	}
-
-	var req CommandRequest
-	// JSONをGoの構造体にバインド（マッピング）します
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
-		return
-	}
-
-	// RobotControllerのメソッドを呼び出してROSに命令を送る
-	if err := h.controller.SendCommand(req.Command); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send command to robot"})
-		return
-	}
-
-	// 成功レスポンスを返す
-	c.JSON(http.StatusOK, gin.H{"status": "command sent", "command": req.Command})
+    var req struct{ Command string `json:"command" binding:"required"` }
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request", "detail": err.Error()})
+        return
+    }
+    if err := h.controller.SendCommand(req.Command); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "send command failed", "detail": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
-// SendCommand はフロントエンドからのコマンド要求を処理します
 func (h *RobotHandler) SendPositionCommand(c *gin.Context) {
-	// リクエストのJSONボディを定義
-	type CommandRequest struct {
-		Command string `json:"command" binding:"required"`
-	}
-
-	var req CommandRequest
-	// JSONをGoの構造体にバインド（マッピング）します
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
-		return
-	}
-
-	// RobotControllerのメソッドを呼び出してROSに命令を送る
-	if err := h.controller.SendPositionCommand(req.Command); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send command to robot"})
-		return
-	}
-
-	// 成功レスポンスを返す
-	c.JSON(http.StatusOK, gin.H{"status": "command sent", "command": req.Command})
+    var req PositionReq
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid position json", "detail": err.Error()})
+        return
+    }
+    if err := h.controller.PublishPosition(req.X, req.Y); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "publish position failed", "detail": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"ok": true})
 }
-// SendMoveCommand はフロントエンドからのコマンド要求を処理します
+
 func (h *RobotHandler) SendMoveCommand(c *gin.Context) {
-	// リクエストのJSONボディを定義
-	type CommandRequest struct {
-		Command string `json:"command" binding:"required"`
-	}
-
-	var req CommandRequest
-	// JSONをGoの構造体にバインド（マッピング）します
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
-		return
-	}
-
-	// RobotControllerのメソッドを呼び出してROSに命令を送る
-	if err := h.controller.SendMoveCommand(req.Command); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send command to robot"})
-		return
-	}
-
-	// 成功レスポンスを返す
-	c.JSON(http.StatusOK, gin.H{"status": "command sent", "command": req.Command})
+    var req DisplacementReq
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid displacement json", "detail": err.Error()})
+        return
+    }
+    if err := h.controller.PublishMove(req.Dx, req.Dy); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "publish move failed", "detail": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"ok": true})
 }
+
 
 // GetTopics は利用可能なトピックのリストを取得します
 func (h *RobotHandler) GetTopics(c *gin.Context) {
 	// RobotControllerのメソッドを呼び出してトピックのリストを取得
-	topics, err := h.controller.GetTopics()
+	topics, err := h.controller.SubscribeTopics()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve topics"})
 		return
