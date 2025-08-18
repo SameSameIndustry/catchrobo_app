@@ -7,8 +7,8 @@ import (
 	"github.com/tiiuae/rclgo/pkg/rclgo"
 	"github.com/tiiuae/rclgo/pkg/rclgo/types"
 	"github.com/tiiuae/rclgo/pkg/rclgo/typemap"
-	builtin_interfaces_msg "catchrobo_app/msgs/builtin_interfaces/msg"
 	primitives "github.com/tiiuae/rclgo/pkg/rclgo/primitives"
+	builtin_interfaces_msg "msgs/builtin_interfaces/msg"
 	
 )
 /*
