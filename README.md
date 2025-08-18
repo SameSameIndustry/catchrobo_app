@@ -22,3 +22,7 @@
 ## その他
 bindマウントにしてるからホットリロードされるはず
 バックエンドが起動しているかを知りたいときはlocalhost:8080にアクセスして```{"message":"Hello from Robot API!"}```と表示される。
+## rclgoメモ
+- 使いたいmsgsがありたいときは
+    - ```ls /opt/ros/$ROS_DISTRO/share/geometry_msgs```でmsgsが定義されてるか確認
+    - ``` rclgo-gen generate -d msgs```で自動的に$AMENT_PREFIX_PATHを見てくれてそこのmsgsをrclgoで使えるためのファイルを自動的に作ってくれる

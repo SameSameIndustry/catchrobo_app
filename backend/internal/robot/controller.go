@@ -9,6 +9,7 @@ import (
 
 	// 生成したメッセージパッケージをインポート
 	std_msgs "catchrobo_app/msgs/std_msgs/msg"
+	geometry_msgs "catchrobo_app/msgs/geometry_msgs/msg"
 
 	"github.com/tiiuae/rclgo/pkg/rclgo"
 )
@@ -19,6 +20,10 @@ type RobotController struct {
 	chatterPub *rclgo.Publisher
 	positionPub *rclgo.Publisher
 	movePub	*rclgo.Publisher
+	goalRadiusPub *rclgo.Publisher
+	resetPub *rclgo.Publisher
+	startPub *rclgo.Publisher
+	catchMotionPub *rclgo.Publisher
 }
 
 // NewController はROSノードとPublisherを初期化し、コントローラーを作成します
@@ -39,12 +44,32 @@ func NewController(ctx context.Context) (*RobotController, error) {
 	}
 
 	// 位置情報をパブリッシュするためのPublisherを作成
-	posPub, err := node.NewPublisher("/position", std_msgs.StringTypeSupport, nil)
+	posPub, err := node.NewPublisher("/arm_move/position", geometry_msgs.PoseTypeSupport, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	movePub, err := node.NewPublisher("/move", std_msgs.StringTypeSupport, nil)
+	movePub, err := node.NewPublisher("/arm_move/move", std_msgs.StringTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	goalRadiusPub, err := node.NewPublisher("/arm_move/goal_radius", std_msgs.StringTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	startPub, err := node.NewPublisher("/arm_move/start", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	catchMotionPub, err := node.NewPublisher("/arm_move/catch_motion", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resetPub, err := node.NewPublisher("/arm_move/reset", std_msgs.EmptyTypeSupport, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +79,10 @@ func NewController(ctx context.Context) (*RobotController, error) {
 		chatterPub: pub,
 		positionPub: posPub,
 		movePub:    movePub,
+		goalRadiusPub: goalRadiusPub,
+		startPub: startPub,
+		catchMotionPub: catchMotionPub,
+		resetPub: resetPub,
 	}, nil
 }
 
@@ -110,6 +139,17 @@ func (rc *RobotController) SendMoveCommand(move string) error {
 	// ログを出力し、メッセージをパブリッシュ
 	rc.node.Logger().Info("Publishing move command: " + move)
 	return rc.movePub.Publish(&rosMsg)
+}
+
+
+// SendGoalRadiusCommand は受け取った目標半径情報を /goal_radius トピックに発行します
+func (rc *RobotController) SendGoalRadiusCommand(radius string) error {
+	// 送信するメッセージを作成
+	rosMsg := std_msgs.String{Data: radius}
+
+	// ログを出力し、メッセージをパブリッシュ
+	rc.node.Logger().Info("Publishing goal radius command: " + radius)
+	return rc.goalRadiusPub.Publish(&rosMsg)
 }
 
 func (rc *RobotController) SubscribeTopics() ([]string, error) {
