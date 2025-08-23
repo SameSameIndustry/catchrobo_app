@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	std_msgs_msg "catchrobo_app/msgs/std_msgs/msg"
+	std_msgs_msg "msgs/std_msgs/msg"
 	"github.com/tiiuae/rclgo/pkg/rclgo"
 )
 

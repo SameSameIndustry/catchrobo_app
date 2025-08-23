@@ -8,8 +8,8 @@ import (
 	"syscall"
 
 	// 生成したメッセージパッケージをインポート
-	std_msgs "catchrobo_app/msgs/std_msgs/msg"
-	geometry_msgs "catchrobo_app/msgs/geometry_msgs/msg"
+	std_msgs "msgs/std_msgs/msg"
+	geometry_msgs "msgs/geometry_msgs/msg"
 
 	"github.com/tiiuae/rclgo/pkg/rclgo"
 )
