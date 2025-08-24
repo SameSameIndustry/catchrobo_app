@@ -17,6 +17,7 @@ export interface Position {
 export interface Displacement {
   dx: number; // x方向の移動量
   dy: number; // y方向の移動量
+  dz: number; // z方向の移動量 追加
 }
 
 /**

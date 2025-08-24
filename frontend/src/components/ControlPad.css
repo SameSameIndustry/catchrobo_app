@@ -13,9 +13,43 @@
   gap: 5px;
 }
 
+.control-pad-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
 .middle-row {
   display: flex;
-  gap: 50px; /* 左右ボタンの間隔 */
+  align-items: center;
+  gap: 50px;
+}
+
+.vertical-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+/* 十字キー部分 */
+.dpad {
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  grid-template-columns: 50px 50px 50px;
+  grid-template-rows: 50px 50px 50px;
+  place-items: center;
+}
+
+/* Z列 */
+.z-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .control-button {
@@ -33,4 +67,25 @@
 
 .control-button:active {
   background-color: #3ca9c8;
+}
+
+.vertical-buttons .control-button {
+  width: 60px;
+}
+
+/* 余白調整 (必要なら) */
+.dpad .up {
+  grid-area: up;
+}
+
+.dpad .left {
+  grid-area: left;
+}
+
+.dpad .right {
+  grid-area: right;
+}
+
+.dpad .down {
+  grid-area: down;
 }

@@ -33,6 +33,7 @@ type JointAnglesReq struct {
 type DisplacementReq struct {
 	Dx float64 `json:"dx"`
 	Dy float64 `json:"dy"`
+	Dz float64 `json:"dz"` // 追加: Z 方向
 }
 
 func (h *RobotHandler) SendPositionCommand(c *gin.Context) {
@@ -96,7 +97,7 @@ func (h *RobotHandler) SendDisplacementCommand(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid displacement json", "detail": err.Error()})
 		return
 	}
-	if err := h.controller.PublishDisplacement(req.Dx, req.Dy); err != nil {
+	if err := h.controller.PublishDisplacement(req.Dx, req.Dy, req.Dz); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish displacement failed", "detail": err.Error()})
 		return
 	}

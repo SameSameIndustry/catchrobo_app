@@ -22,6 +22,10 @@ type RobotController struct {
 	startPub       *rclgo.Publisher
 	catchMotionPub *rclgo.Publisher
 	jointAnglesPub *rclgo.Publisher
+	// 現在の目標(累積)位置
+	currentX float64
+	currentY float64
+	currentZ float64
 }
 
 // NewController はROSノードとPublisherを初期化し、コントローラーを作成します
@@ -69,6 +73,9 @@ func NewController(_ context.Context) (*RobotController, error) {
 		catchMotionPub: catchMotionPub,
 		resetPub:       resetPub,
 		jointAnglesPub: jointAnglesPub,
+		currentX:       0,
+		currentY:       0,
+		currentZ:       0,
 	}, nil
 }
 
@@ -79,6 +86,7 @@ func (rc *RobotController) PublishPosition(x, y, z float64) error {
 	if rc.positionPub == nil {
 		return fmt.Errorf("position publisher not initialized")
 	}
+	rc.currentX, rc.currentY, rc.currentZ = x, y, z
 	rosMsg := geometry_msgs.Pose{Position: geometry_msgs.Point{X: x, Y: y, Z: z}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}
 
 	// ログを出力し、メッセージをパブリッシュ
@@ -128,16 +136,20 @@ func (rc *RobotController) PublishResetMotion() error {
 	return rc.resetPub.Publish(&rosMsg)
 }
 
-func (rc *RobotController) PublishDisplacement(dx, dy float64) error {
+// 相対変位を受け取り、内部に累積した目標絶対位置を更新してPublish
+func (rc *RobotController) PublishDisplacement(dx, dy, dz float64) error {
 	if rc == nil || rc.node == nil {
 		return fmt.Errorf("node not initialized")
 	}
 	if rc.positionPub == nil {
 		return fmt.Errorf("position publisher not initialized")
 	}
-	// Interpret displacement as relative move command (placeholder). Here we publish as Pose with displacement in X,Y and 0 Z.
-	rosMsg := geometry_msgs.Pose{Position: geometry_msgs.Point{X: dx, Y: dy, Z: 0}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}
-	rc.node.Logger().Info("Publishing displacement: " + fmt.Sprintf("dX: %.3f dY: %.3f", dx, dy))
+	// 累積
+	rc.currentX += dx
+	rc.currentY += dy
+	rc.currentZ += dz
+	rosMsg := geometry_msgs.Pose{Position: geometry_msgs.Point{X: rc.currentX, Y: rc.currentY, Z: rc.currentZ}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}
+	rc.node.Logger().Info("Publishing displacement accumulated -> " + fmt.Sprintf("(%.3f, %.3f, %.3f)", rc.currentX, rc.currentY, rc.currentZ))
 	return rc.positionPub.Publish(&rosMsg)
 }
 

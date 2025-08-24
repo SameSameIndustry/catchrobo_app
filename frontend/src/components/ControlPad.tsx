@@ -2,79 +2,36 @@
 
 // frontend/src/components/ControlPad.tsx
 
-import React, { useRef } from 'react';
-import { Displacement } from '../types'; // <-- この行を追加！
+import React, { useRef, useEffect } from 'react';
 import { sendDisplacement } from '../api/robotAPI';
 import './ControlPad.css';
 
-// 1秒あたりに動く量（単位は任意）
-const MOVE_SPEED = 0.1; // units per second
+// 1 tick(100ms) あたりに送る変位量（任意単位）
+const STEP_PER_TICK = 0.01; // 調整可能
+const Z_STEP_PER_TICK = 0.01; // Z方向
 
 const ControlPad = () => {
-  // 再レンダリングを発生させずに値を保持するためにuseRefを使用
-  const pressStartTime = useRef<number | null>(null);
-
-  // マウスボタンが押された時の処理
-  const handlePressStart = () => {
-    pressStartTime.current = Date.now();
-  };
-
-  // マウスボタンが離された時の処理
-  const handlePressEnd = (dx: number, dy: number) => {
-    if (pressStartTime.current === null) return;
-
-    const pressDuration = (Date.now() - pressStartTime.current) / 1000; // 秒単位
-    
-    // 移動量 = 速度 x 時間
-    const displacement: Displacement = {
-      dx: dx * MOVE_SPEED * pressDuration,
-      dy: dy * MOVE_SPEED * pressDuration,
-    };
-
-    console.log(`Moved for ${pressDuration.toFixed(2)}s. Displacement: (${displacement.dx.toFixed(3)}, ${displacement.dy.toFixed(3)})`);
-    
-    // API関数を呼び出して変位量を送信
-    sendDisplacement(displacement)
-      .then(response => console.log('Server response:', response))
-      .catch(error => console.error('Error sending displacement:', error));
-
-    pressStartTime.current = null;
-  };
+  const intervalRef = useRef<number | null>(null);
+  const directionRef = useRef<{dx:number;dy:number;dz:number}>({dx:0,dy:0,dz:0});
+  const stop = () => { if (intervalRef.current !== null) { clearInterval(intervalRef.current); intervalRef.current = null; } directionRef.current = {dx:0,dy:0,dz:0}; };
+  const start = (dx:number, dy:number, dz:number=0) => { if (intervalRef.current) return; directionRef.current = {dx,dy,dz}; tick(); intervalRef.current = window.setInterval(tick, 100); };
+  const tick = () => { const {dx,dy,dz} = directionRef.current; if (dx === 0 && dy === 0 && dz === 0) return; sendDisplacement({ dx: dx * STEP_PER_TICK, dy: dy * STEP_PER_TICK, dz: dz * Z_STEP_PER_TICK }).catch(err => console.error('displacement send failed', err)); };
+  useEffect(() => () => stop(), []);
 
   return (
     <div className="control-pad-container">
       <h3>Control Pad</h3>
-      <div className="control-pad">
-        <button
-          className="control-button up"
-          onMouseDown={handlePressStart}
-          onMouseUp={() => handlePressEnd(0, -1)}
-        >
-          ↑
-        </button>
-        <div className="middle-row">
-          <button
-            className="control-button left"
-            onMouseDown={handlePressStart}
-            onMouseUp={() => handlePressEnd(-1, 0)}
-          >
-            ←
-          </button>
-          <button
-            className="control-button right"
-            onMouseDown={handlePressStart}
-            onMouseUp={() => handlePressEnd(1, 0)}
-          >
-            →
-          </button>
+      <div className="control-pad-body">
+        <div className="dpad">
+          <button className="control-button up"    onMouseDown={() => start(0,-1)} onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,-1);}} onTouchEnd={stop} style={{gridArea:'up'}}>↑</button>
+          <button className="control-button left"  onMouseDown={() => start(-1,0)} onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(-1,0);}} onTouchEnd={stop} style={{gridArea:'left'}}>←</button>
+          <button className="control-button right" onMouseDown={() => start(1,0)}  onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(1,0);}}  onTouchEnd={stop} style={{gridArea:'right'}}>→</button>
+          <button className="control-button down"  onMouseDown={() => start(0,1)}  onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,1);}}  onTouchEnd={stop} style={{gridArea:'down'}}>↓</button>
         </div>
-        <button
-          className="control-button down"
-          onMouseDown={handlePressStart}
-          onMouseUp={() => handlePressEnd(0, 1)}
-        >
-          ↓
-        </button>
+        <div className="z-column">
+          <button className="control-button z-up"   onMouseDown={() => start(0,0,1)}  onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,0,1);}}  onTouchEnd={stop}>Z+</button>
+          <button className="control-button z-down" onMouseDown={() => start(0,0,-1)} onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,0,-1);}} onTouchEnd={stop}>Z-</button>
+        </div>
       </div>
     </div>
   );

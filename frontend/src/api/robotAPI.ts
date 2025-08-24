@@ -4,7 +4,7 @@
 
 import { Position, Displacement } from '../types';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = '/api';  
 
 /**
  * 指定した座標をバックエンドに送信する
@@ -43,7 +43,11 @@ export const sendDisplacement = async (displacement: Displacement): Promise<any>
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(displacement),
+      body: JSON.stringify({
+        dx: displacement.dx,
+        dy: displacement.dy,
+        dz: displacement.dz ?? 0, // dz を追加、未指定の場合は 0 を補完
+      }),
     });
 
     if (!response.ok) {
