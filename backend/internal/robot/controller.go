@@ -17,10 +17,7 @@ import (
 // RobotController はROSノードとPublisherを保持します
 type RobotController struct {
 	node       *rclgo.Node
-	chatterPub *rclgo.Publisher
 	positionPub *rclgo.Publisher
-	movePub	*rclgo.Publisher
-	goalRadiusPub *rclgo.Publisher
 	resetPub *rclgo.Publisher
 	startPub *rclgo.Publisher
 	catchMotionPub *rclgo.Publisher
@@ -37,29 +34,14 @@ func NewController(ctx context.Context) (*RobotController, error) {
 	}
 
 	// 文字列をパブリッシュするためのPublisherを作成
-	// 型情報として生成された StringTypeSupport を使用
-	pub, err := node.NewPublisher("/chatter", std_msgs.StringTypeSupport, nil)
-	if err != nil {
-		return nil, err
-	}
 
 	// 位置情報をパブリッシュするためのPublisherを作成
-	posPub, err := node.NewPublisher("/arm_move/position", geometry_msgs.PoseTypeSupport, nil)
+	posPub, err := node.NewPublisher("/arm_move/goal_pose", geometry_msgs.PoseTypeSupport, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	movePub, err := node.NewPublisher("/arm_move/move", std_msgs.StringTypeSupport, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	goalRadiusPub, err := node.NewPublisher("/arm_move/goal_radius", std_msgs.StringTypeSupport, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	startPub, err := node.NewPublisher("/arm_move/start", std_msgs.EmptyTypeSupport, nil)
+	startPub, err := node.NewPublisher("/arm_move/start_motion", std_msgs.EmptyTypeSupport, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -69,17 +51,14 @@ func NewController(ctx context.Context) (*RobotController, error) {
 		return nil, err
 	}
 
-	resetPub, err := node.NewPublisher("/arm_move/reset", std_msgs.EmptyTypeSupport, nil)
+	resetPub, err := node.NewPublisher("/arm_move/reset_motion", std_msgs.EmptyTypeSupport, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &RobotController{
 		node:       node,
-		chatterPub: pub,
 		positionPub: posPub,
-		movePub:    movePub,
-		goalRadiusPub: goalRadiusPub,
 		startPub: startPub,
 		catchMotionPub: catchMotionPub,
 		resetPub: resetPub,
@@ -87,69 +66,44 @@ func NewController(ctx context.Context) (*RobotController, error) {
 }
 
 
-// SendCommand は受け取った文字列を /chatter トピックに発行します
-func (rc *RobotController) SendCommand(command string) error {
-	// 送信するメッセージを作成
-	rosMsg := std_msgs.String{Data: command}
-
-	// ログを出力し、メッセージをパブリッシュ
-	rc.node.Logger().Info("Publishing command: " + command)
-	return rc.chatterPub.Publish(&rosMsg)
-}
-
-func (rc *RobotController) PublishPosition(x, y float64) error {
+func (rc *RobotController) PublishPosition(x, y, z float64) error {
     if rc == nil || rc.node == nil { return fmt.Errorf("node not initialized") }
     if rc.positionPub == nil { return fmt.Errorf("position publisher not initialized") }
-    // 送信するメッセージを作成
-	// TODO std_msgs.Stringではなく、位置情報用のメッセージを使う
-	rosMsg := std_msgs.String{Data: fmt.Sprintf("Position: (%.2f, %.2f)", x, y)}
+	rosMsg := geometry_msgs.Pose{Position: geometry_msgs.Point{X: x, Y: y, Z: z}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}
 
 	// ログを出力し、メッセージをパブリッシュ
-	rc.node.Logger().Info("Publishing position: " + rosMsg.Data)
+	rc.node.Logger().Info("Publishing position: " + fmt.Sprintf("Position: (%.2f, %.2f, %.2f)", x, y, z))
 	return rc.positionPub.Publish(&rosMsg)
 }
 
-func (rc *RobotController) PublishMove(dx, dy float64) error {
+func (rc *RobotController) PublishStartMotion() error {
     if rc == nil || rc.node == nil { return fmt.Errorf("node not initialized") }
-    if rc.movePub == nil { return fmt.Errorf("move publisher not initialized") }
-    /// 送信するメッセージを作成
-	// TODO std_msgs.Stringではなく、移動情報用のメッセージを使う
-	rosMsg := std_msgs.String{Data: fmt.Sprintf("Move: (%.2f, %.2f)", dx, dy)}
+    if rc.startPub == nil { return fmt.Errorf("start publisher not initialized") }
+	rosMsg := std_msgs.Empty{}
 
 	// ログを出力し、メッセージをパブリッシュ
-	rc.node.Logger().Info("Publishing move command: " + rosMsg.Data)
-	return rc.movePub.Publish(&rosMsg)
+	rc.node.Logger().Info("Publishing start motion command")
+	return rc.startPub.Publish(&rosMsg)
 }
 
-// SendPositionCommand は受け取った位置情報を /position トピックに発行します
-func (rc *RobotController) SendPositionCommand(position string) error {
-	// 送信するメッセージを作成
-	rosMsg := std_msgs.String{Data: position}
+func (rc *RobotController) PublishCatchMotion() error {
+	if rc == nil || rc.node == nil { return fmt.Errorf("node not initialized") }
+	if rc.catchMotionPub == nil { return fmt.Errorf("catch motion publisher not initialized") }
+	rosMsg := std_msgs.Empty{}
 
 	// ログを出力し、メッセージをパブリッシュ
-	rc.node.Logger().Info("Publishing position: " + position)
-	return rc.positionPub.Publish(&rosMsg)
+	rc.node.Logger().Info("Publishing catch motion command")
+	return rc.catchMotionPub.Publish(&rosMsg)
 }
 
-// SendMoveCommand は受け取った移動情報を /move トピックに発行します
-func (rc *RobotController) SendMoveCommand(move string) error {
-	// 送信するメッセージを作成
-	rosMsg := std_msgs.String{Data: move}
+func (rc *RobotController) PublishResetMotion() error {
+	if rc == nil || rc.node == nil { return fmt.Errorf("node not initialized") }
+	if rc.resetPub == nil { return fmt.Errorf("reset publisher not initialized") }
+	rosMsg := std_msgs.Empty{}
 
 	// ログを出力し、メッセージをパブリッシュ
-	rc.node.Logger().Info("Publishing move command: " + move)
-	return rc.movePub.Publish(&rosMsg)
-}
-
-
-// SendGoalRadiusCommand は受け取った目標半径情報を /goal_radius トピックに発行します
-func (rc *RobotController) SendGoalRadiusCommand(radius string) error {
-	// 送信するメッセージを作成
-	rosMsg := std_msgs.String{Data: radius}
-
-	// ログを出力し、メッセージをパブリッシュ
-	rc.node.Logger().Info("Publishing goal radius command: " + radius)
-	return rc.goalRadiusPub.Publish(&rosMsg)
+	rc.node.Logger().Info("Publishing reset motion command")
+	return rc.resetPub.Publish(&rosMsg)
 }
 
 func (rc *RobotController) SubscribeTopics() ([]string, error) {
@@ -167,28 +121,36 @@ func (rc *RobotController) SubscribeTopics() ([]string, error) {
 	return topicNames, nil
 }
 
-func (rc *RobotController) Get(topic_name string) (*rclgo.Publisher, error) {
-	
-	switch topic_name {
-	case "/chatter":
-		return rc.chatterPub, nil
-	case "/position":
-		return rc.positionPub, nil
-	case "/move":
-		return rc.movePub, nil
-	default:
-		return nil, fmt.Errorf("unknown topic: %s", topic_name)
-	}
-}
-
-// Close はROSノードをクリーンに終了させます
 func (rc *RobotController) Close() {
-	if rc.chatterPub != nil {
-		rc.chatterPub.Close()
+	if rc.positionPub != nil {
+		rc.positionPub.Close()
+	}
+	if rc.startPub != nil {
+		rc.startPub.Close()
+	}
+	if rc.resetPub != nil {
+		rc.resetPub.Close()
+	}
+	if rc.catchMotionPub != nil {
+		rc.catchMotionPub.Close()
 	}
 	if rc.node != nil {
 		rc.node.Close()
 	}
+}
 
-
+func (rc *RobotController) Get(topic_name string) (*rclgo.Publisher, error) {
+	
+	switch topic_name {
+	case "/position":
+		return rc.positionPub, nil
+	case "/start_motion":
+		return rc.startPub, nil
+	case "/reset_motion":
+		return rc.resetPub, nil
+	case "/catch_motion":
+		return rc.catchMotionPub, nil
+	default:
+		return nil, fmt.Errorf("unknown topic: %s", topic_name)
+	}
 }

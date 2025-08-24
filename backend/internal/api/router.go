@@ -19,9 +19,8 @@ func SetupRouter(rc *robot.RobotController) *gin.Engine {
 	api := r.Group("/api")
 	{
 		// この中にいろんなAPIエンドポイントを定義する
-		api.POST("/command", robotHandler.SendCommand)
 		api.POST("/position", robotHandler.SendPositionCommand)
-		api.POST("/move", robotHandler.SendMoveCommand)
+		// api.POST("/move", robotHandler.SendMoveCommand)
 		api.GET("/topics", robotHandler.GetTopics)
 	}
 	// 追加のエンドポイントを設定
