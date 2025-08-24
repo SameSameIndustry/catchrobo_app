@@ -137,3 +137,134 @@
   color: #61dafb;
   border-top: 3px solid #61dafb; /* アクティブなタブを示すボーダー */
 }
+
+.competition-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.motion-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.motion-buttons button {
+  background: #61dafb;
+  color: #000;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.motion-buttons button:hover {
+  background: #52c0e8;
+}
+
+.goal-inputs {
+  margin-top: 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.goal-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.goal-row input {
+  width: 70px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1f2229;
+  color: #fff;
+}
+
+.goal-row button {
+  background: #8bc34a;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.goal-row button:hover {
+  background: #7ab23f;
+}
+
+.pad-area {
+  display: flex;
+}
+
+.debug-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.coord-inputs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.coord-inputs input {
+  width: 70px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1f2229;
+  color: #fff;
+}
+
+.coord-inputs button {
+  background: #61dafb;
+  color: #000;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.joint-inputs {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.joint-row input {
+  width: 90px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1f2229;
+  color: #fff;
+}
+
+.joint-inputs button {
+  margin-top: 8px;
+  width: 140px;
+  background: #8bc34a;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.status-message {
+  min-height: 24px;
+  margin: 8px 0;
+  font-size: 14px;
+  color: #61dafb;
+}

@@ -24,7 +24,7 @@ const RobotField = () => {
     console.log(`Clicked at: (${x}, ${y}) | Normalized: (${normalizedX.toFixed(3)}, ${normalizedY.toFixed(3)})`);
     
     // API関数を呼び出して座標を送信
-    sendPosition({ x: normalizedX, y: normalizedY })
+    sendPosition({ x: normalizedX, y: normalizedY, z: 0 }) // zは0で固定
       .then(response => console.log('Server response:', response))
       .catch(error => console.error('Error sending position:', error));
   };

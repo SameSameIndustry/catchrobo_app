@@ -1,106 +1,103 @@
 // frontend/src/App.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import RobotField from './components/RobotField';
 import ControlPad from './components/ControlPad';
+import { sendPosition, sendJointAngles, startMotion, catchMotion, resetMotion } from './api/robotAPI';
 
 // タブの種類を型として定義しておくと、コードが安全になります
-type Tab = 'position' | 'manual' | 'topic';
+type Tab = 'competition' | 'debug' | 'field';
 
 function App() {
-  // 現在アクティブなタブを管理するためのState
-  // 初期値として 'position' (座標指定モード) を設定
-  const [activeTab, setActiveTab] = useState<Tab>('position');
-  const [topics, setTopics] = useState<string[]>([]);
-  const [selectedTopic, setSelectedTopic] = useState<string>('');
-  const [topicContent, setTopicContent] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<Tab>('competition');
+  const [goal, setGoal] = useState({ x: '', y: '', z: '' });
+  const [jointAngles, setJointAngles] = useState<string[]>(['', '', '', '', '', '']);
+  const [message, setMessage] = useState<string>('');
 
-  const fetchTopics = async () => {
-    try {
-      const response = await fetch('/api/topics');
-      const data = await response.json();
-      setTopics(data.topics);
-    } catch (error) {
-      console.error('Failed to fetch topics:', error);
-    }
+  const handleGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setGoal(prev => ({ ...prev, [name]: value }));
   };
 
-  useEffect(() => {
-    if (activeTab === 'topic') {
-      fetchTopics();
-    }
-  }, [activeTab]);
-
-  const handleTopicChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const topic = event.target.value;
-    setSelectedTopic(topic);
+  const submitGoal = async () => {
     try {
-      const response = await fetch(`/api/topics/${topic}`);
-      const data = await response.json();
-      setTopicContent(JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error('Failed to fetch topic content:', error);
-    }
+      await sendPosition({ x: parseFloat(goal.x), y: parseFloat(goal.y), z: parseFloat(goal.z) });
+      setMessage('Goal sent');
+    } catch (e:any) { setMessage(e.message); }
   };
+
+  const pressMotion = async (fn: () => Promise<any>) => {
+    try { await fn(); setMessage('OK'); } catch(e:any){ setMessage(e.message);} }
+  
+  const handleJointChange = (idx:number, val:string) => {
+    setJointAngles(prev => prev.map((v,i)=> i===idx? val: v));
+  };
+
+  const submitJointAngles = async () => {
+    try {
+      const angles = jointAngles.map(a => parseFloat(a)||0);
+      await sendJointAngles(angles);
+      setMessage('Joint angles sent');
+    } catch(e:any){ setMessage(e.message);} }
 
   return (
     <div className="App">
       <header className="App-header">
-        {/* activeTabの値に応じてコンポーネントのタイトルを変更 */}
-        <h1>{activeTab === 'position' ? 'Position Control' : activeTab === 'manual' ? 'Manual Control' : 'Topic Interface'}</h1>
+        <h1>{activeTab === 'competition' ? '競技用' : activeTab === 'debug' ? 'デバッグ用' : 'フィールド表示'}</h1>
 
         {/* コンテンツエリア */}
         <div className="content-area">
-          {/* activeTabが 'position' の場合にのみ RobotField を表示 */}
-          {activeTab === 'position' && <RobotField />}
-          
-          {/* activeTabが 'manual' の場合にのみ ControlPad を表示 */}
-          {activeTab === 'manual' && <ControlPad />}
-          {activeTab === 'topic' && (
-            <div>
-              <button onClick={fetchTopics}>Reload Topics</button>
-              <select onChange={handleTopicChange} value={selectedTopic}>
-                <option value="">Select a topic</option>
-                {topics.map((topic) => (
-                  <option key={topic} value={topic}>{topic}</option>
-                ))}
-              </select>
-              <pre>{topicContent}</pre>
+          {activeTab === 'competition' && (
+            <div className="competition-layout">
+              <div className="motion-buttons">
+                <button onClick={()=>pressMotion(startMotion)}>Start Motion</button>
+                <button onClick={()=>pressMotion(catchMotion)}>Catch Motion</button>
+                <button onClick={()=>pressMotion(resetMotion)}>Reset Motion</button>
+                <div className="goal-inputs">
+                  <span>目標ゴール座標</span>
+                  <div className="goal-row">
+                    x:<input name="x" value={goal.x} onChange={handleGoalChange} />
+                    y:<input name="y" value={goal.y} onChange={handleGoalChange} />
+                    z:<input name="z" value={goal.z} onChange={handleGoalChange} />
+                    <button onClick={submitGoal}>送信</button>
+                  </div>
+                </div>
+              </div>
+              <div className="pad-area">
+                <ControlPad />
+              </div>
             </div>
           )}
+          {activeTab === 'debug' && (
+            <div className="debug-layout">
+              <div className="coord-inputs">
+                X:<input value={goal.x} name="x" onChange={handleGoalChange} />
+                Y:<input value={goal.y} name="y" onChange={handleGoalChange} />
+                Z:<input value={goal.z} name="z" onChange={handleGoalChange} />
+                <button onClick={submitGoal}>Move</button>
+              </div>
+              <div className="joint-inputs">
+                {jointAngles.map((val,i)=>(
+                  <div key={i} className="joint-row">Joint {i+1}: <input value={val} onChange={e=>handleJointChange(i,e.target.value)} /> rad</div>
+                ))}
+                <button onClick={submitJointAngles}>Send Joints</button>
+              </div>
+            </div>
+          )}
+          {activeTab === 'field' && <RobotField />}
         </div>
+        <div className="status-message">{message}</div>
 
         {/* タブナビゲーションバー */}
         <nav className="tab-bar">
-          <button
-            // activeTabが 'position' の場合に 'active' クラスを付与
-            className={`tab-button ${activeTab === 'position' ? 'active' : ''}`}
-            // クリックされたら activeTab の値を 'position' に更新
-            onClick={() => setActiveTab('position')}
-          >
-            Position
-          </button>
-          <button
-            // activeTabが 'manual' の場合に 'active' クラスを付与
-            className={`tab-button ${activeTab === 'manual' ? 'active' : ''}`}
-            // クリックされたら activeTab の値を 'manual' に更新
-            onClick={() => setActiveTab('manual')}
-          >
-            Manual
-          </button>
-          <button
-            // activeTabが 'topic' の場合に 'active' クラスを付与
-            className={`tab-button ${activeTab === 'topic' ? 'active' : ''}`}
-            // クリックされたら activeTab の値を 'topic' に更新
-            onClick={() => setActiveTab('topic')}
-          >
-            Topic IF
-          </button>
-        </nav>
-      </header>
-    </div>
-  );
-}
-
-export default App;
+          <button className={`tab-button ${activeTab === 'competition' ? 'active' : ''}`} onClick={()=>setActiveTab('competition')}>競技用</button>
+          <button className={`tab-button ${activeTab === 'debug' ? 'active' : ''}`} onClick={()=>setActiveTab('debug')}>デバッグ用</button>
+            <button className={`tab-button ${activeTab === 'field' ? 'active' : ''}`} onClick={()=>setActiveTab('field')}>フィールド表示</button>
+         </nav>
+       </header>
+     </div>
+   );
+ }
+ 
+ export default App;
