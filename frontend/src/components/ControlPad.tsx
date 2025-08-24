@@ -23,10 +23,10 @@ const ControlPad = () => {
       <h3>Control Pad</h3>
       <div className="control-pad-body">
         <div className="dpad">
-          <button className="control-button up"    onMouseDown={() => start(0,-1)} onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,-1);}} onTouchEnd={stop} style={{gridArea:'up'}}>↑</button>
+          <button className="control-button up"    onMouseDown={() => start(0,1)} onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,-1);}} onTouchEnd={stop} style={{gridArea:'up'}}>↑</button>
           <button className="control-button left"  onMouseDown={() => start(-1,0)} onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(-1,0);}} onTouchEnd={stop} style={{gridArea:'left'}}>←</button>
           <button className="control-button right" onMouseDown={() => start(1,0)}  onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(1,0);}}  onTouchEnd={stop} style={{gridArea:'right'}}>→</button>
-          <button className="control-button down"  onMouseDown={() => start(0,1)}  onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,1);}}  onTouchEnd={stop} style={{gridArea:'down'}}>↓</button>
+          <button className="control-button down"  onMouseDown={() => start(0,-1)}  onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,1);}}  onTouchEnd={stop} style={{gridArea:'down'}}>↓</button>
         </div>
         <div className="z-column">
           <button className="control-button z-up"   onMouseDown={() => start(0,0,1)}  onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,0,1);}}  onTouchEnd={stop}>Z+</button>
