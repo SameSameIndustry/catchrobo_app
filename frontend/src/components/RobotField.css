@@ -1,13 +1,123 @@
-/* frontend/src/components/RobotField.css */
-.robot-field-container {
-  border: 1px solid #61dafb;
-  border-radius: 8px;
-  padding: 1rem;
+:root {
+  --blue: #2b6cf5;
+  --red:  #ef4444;
+  --mid:  #9aa3af;
+
+  /* ブロック群の配置（左右で対称） */
+  --blocks-top:   10%;
+  --blocks-h:     80%;
+  --blocks-w:     32%;
+  --blocks-right-left: 58%;          /* 右側の左端 */
+  --blocks-left-left:  calc(100% - (var(--blocks-right-left) + var(--blocks-w)));
 }
 
-.robot-field-image {
-  max-width: 100%;
-  height: auto;
+.robot-field-outer {
+  width: min(95vw, 1400px);
+  margin: 0 auto;
+  padding: 12px;
+  border: 1px solid #61dafb;
+  border-radius: 12px;
+}
+
+.robot-field-title {
+  font-size: clamp(18px, 2.2vmin, 24px);
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #e5f6ff;
+}
+
+.robot-field {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, transparent 47%, var(--mid) 47% 53%, transparent 53%),
+    linear-gradient(90deg, var(--blue) 0% 50%, var(--red) 50% 100%);
+}
+
+/* 中央の赤点線 */
+.robot-field::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,0,0,0.9) 0 16px,
+    transparent 16px 26px
+  );
+  pointer-events: none;
+}
+
+/* ベンチ（クリック不可） */
+.bench {
+  position: absolute;
+  width: 18%;
+  height: 16%;
+  bottom: 6%;
+  background: #111;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25) inset;
+  pointer-events: none;
+}
+.bench-left  { left: 8%; }
+.bench-right { right: 8%; }
+
+/* 共通：4×10 のグリッドラッパー（触れない） */
+.blocks-grid {
+  position: absolute;
+  top: var(--blocks-top);
+  width: var(--blocks-w);
+  height: var(--blocks-h);
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-template-rows: repeat(var(--rows), 1fr);
+  gap: min(0.8vmin, 10px);
+  padding: min(1.0vmin, 12px);
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* 位置（左右） */
+.blocks-left  { left: var(--blocks-left-left);  }
+.blocks-right { left: var(--blocks-right-left); }
+
+/* 触れるのは .block のみ（横長） */
+.block {
+  pointer-events: auto;
+  width: 92%;
+  aspect-ratio: 2.4 / 1;
+  justify-self: center;
+  align-self: center;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 2px 6px rgba(0,0,0,.25);
   cursor: pointer;
-  background-color: #fff; /* 画像が透過の場合の背景色 */
+  transition: transform .06s ease, box-shadow .06s ease, filter .06s ease;
+  touch-action: manipulation;
+}
+
+/* 色分け（右＝赤系、左＝青系） */
+.block-right { background: #ffc1c1; }
+.block-left  { background: #a7c4ff; }
+
+.block:hover,
+.block:focus-visible {
+  outline: none;
+  filter: brightness(1.05);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.6) inset, 0 4px 10px rgba(0,0,0,.35);
+}
+.block:active { transform: translateY(1px) scale(0.98); }
+
+/* 画面が狭い時は少し内側に寄せる */
+@media (max-width: 900px) {
+  :root {
+    --blocks-right-left: 55%;
+    --blocks-w: 38%;
+  }
 }

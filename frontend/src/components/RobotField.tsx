@@ -1,43 +1,69 @@
-// 矢印ボタンのUIを表示し、ボタンが押されている時間を計測して、変位量をバックエンドに送信する責務を持ちます。
-
-// frontend/src/components/RobotField.tsx
-
-import React from 'react';
-// src/assets/field.png に画像を配置したと仮定
-import fieldImage from '../assets/field.png';
+import React, { useRef } from 'react';
 import { sendPosition } from '../api/robotAPI';
-import './RobotField.css'; // スタイル用にCSSファイルをインポート
+import './RobotField.css';
 
-const RobotField = () => {
-  const handleClick = (event: React.MouseEvent<HTMLImageElement>) => {
-    // 画像要素のサイズと画面上の位置を取得
-    const rect = event.currentTarget.getBoundingClientRect();
+const ROWS = 10; // 縦
+const COLS = 4;  // 横
 
-    // クリック位置の画像内での相対座標を計算
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+const RobotField: React.FC = () => {
+  const fieldRef = useRef<HTMLDivElement>(null);
 
-    // (オプション) バックエンドが扱いやすいように座標を正規化（0.0 ~ 1.0の範囲に）
-    const normalizedX = x / rect.width;
-    const normalizedY = y / rect.height;
+  const handleBlockPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = fieldRef.current;
+    if (!container) return;
 
-    console.log(`Clicked at: (${x}, ${y}) | Normalized: (${normalizedX.toFixed(3)}, ${normalizedY.toFixed(3)})`);
-    
-    // API関数を呼び出して座標を送信
-    sendPosition({ x: normalizedX, y: normalizedY, z: 0 }) // zは0で固定
-      .then(response => console.log('Server response:', response))
-      .catch(error => console.error('Error sending position:', error));
+    const cRect = container.getBoundingClientRect();
+    const bRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+
+    const cx = bRect.left + bRect.width / 2 - cRect.left;
+    const cy = bRect.top + bRect.height / 2 - cRect.top;
+
+    const nx = cx / cRect.width;
+    const ny = cy / cRect.height;
+
+    sendPosition({ x: nx, y: ny, z: 0 })
+      .then((res) => console.log('sent', { nx, ny }, res))
+      .catch((err) => console.error('sendPosition error', err));
   };
 
+  const renderGrid = (side: 'left' | 'right') => (
+    <div
+      className={`blocks-grid blocks-${side}`}
+      style={{ '--rows': ROWS, '--cols': COLS } as React.CSSProperties}
+    >
+      {Array.from({ length: ROWS * COLS }).map((_, i) => (
+        <div
+          key={`${side}-${i}`}
+          className={`block block-${side}`}
+          role="button"
+          tabIndex={0}
+          onPointerDown={handleBlockPointerDown}
+          onKeyDown={(ke) => {
+            if (ke.key === 'Enter' || ke.key === ' ') {
+              (ke.target as HTMLDivElement).dispatchEvent(
+                new PointerEvent('pointerdown', { bubbles: true })
+              );
+            }
+          }}
+        />
+      ))}
+    </div>
+  );
+
   return (
-    <div className="robot-field-container">
-      <h3>Field</h3>
-      <img
-        src={fieldImage}
-        alt="Robot Field"
-        onClick={handleClick}
-        className="robot-field-image"
-      />
+    <div className="robot-field-outer">
+      <div className="robot-field-title">Field</div>
+
+      <div ref={fieldRef} className="robot-field" aria-label="robot field">
+        {/* 装飾（クリック不可） */}
+        <div className="bench bench-left" />
+        <div className="bench bench-right" />
+
+        {/* ★ 左右どちらにも 4×10 を配置 */}
+        {renderGrid('left')}
+        {renderGrid('right')}
+      </div>
     </div>
   );
 };
