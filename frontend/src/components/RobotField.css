@@ -4,27 +4,33 @@
   --red:  #ef4444;
   --mid:  #9aa3af;
 
-  /* 4×10 ブロック群の配置（左右は対称） */
+  /* 4×10 ブロック群（左右は対称） */
   --blocks-top: 10%;
   --blocks-h:   80%;
-  --blocks-w:   32%;
-  /* 右側のブロック群の left。左側はこれから対称計算 */
+  --blocks-w:   28%;
+  /* 右側のブロック群の left。左側は対称計算 */
   --blocks-right-left: 58%;
   --blocks-left-left:  calc(100% - (var(--blocks-right-left) + var(--blocks-w)));
+
+  /* 両端 Dock（黒長方形） */
+  --dock-w: 11%;
+  --dock-h: 56%;
+  --dock-margin: 3%;                        /* 画面端からの距離 */
+  --dock-top: calc(50% - var(--dock-h) / 2);
+  --dock-left-left:  var(--dock-margin);
+  --dock-right-left: calc(100% - var(--dock-margin) - var(--dock-w));
 }
 
-/* 外枠：幅は親に合わせつつ最大幅を抑える */
+/* 外枠 */
 .robot-field-outer {
   width: 100%;
-  max-width: 1100px;       /* 必要に応じて調整 */
+  max-width: 1100px;
   margin: 0 auto;
   padding: 12px;
   border: 1px solid #61dafb;
   border-radius: 12px;
   background: transparent;
 }
-
-/* タイトル */
 .robot-field-title {
   font-size: clamp(18px, 2.2vmin, 24px);
   font-weight: 700;
@@ -32,28 +38,50 @@
   color: #e5f6ff;
 }
 
-/* フィールド本体：16:9 を維持、画面からはみ出さないよう高さ上限 */
+/* コントロール */
+.field-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 10px;
+  flex-wrap: wrap;
+}
+.side-toggle {
+  display: inline-flex;
+  border: 1px solid #3a3f4a;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.side-btn { padding: 6px 14px; background: #20232a; color: #cfe9ff; border: none; cursor: pointer; font-size: 14px; }
+.side-btn.active { background: #61dafb; color: #0b2233; }
+
+.origin-controls { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.origin-label { font-size: 13px; opacity: .8; margin-right: 2px; }
+.origin-controls input {
+  width: 70px; padding: 4px 6px; border-radius: 6px;
+  border: 1px solid #3a3f4a; background: #1f2229; color: #fff;
+}
+.bench-center-btn { background: #8bc34a; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.bench-center-btn:hover { filter: brightness(1.05); }
+
+/* フィールド本体：16:9、中央灰帯＋赤点線 */
 .robot-field {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 60vh;        /* ★ タブを潰さないための上限 */
+  max-height: 60vh;
   border-radius: 10px;
   overflow: hidden;
   background:
-    /* 中央の灰帯 */
     linear-gradient(90deg, transparent 47%, var(--mid) 47% 53%, transparent 53%),
-    /* 左右カラー */
     linear-gradient(90deg, var(--blue) 0% 50%, var(--red) 50% 100%);
 }
-
-/* 中央の赤点線（装飾） */
 .robot-field::after {
   content: "";
   position: absolute;
   left: 50%;
-  top: 0;
-  bottom: 0;
+  top: 0; bottom: 0;
   width: 2px;
   transform: translateX(-50%);
   background: repeating-linear-gradient(
@@ -64,50 +92,45 @@
   pointer-events: none;
 }
 
-/* ベンチ（クリック不可の飾り） */
-.bench {
+/* Dock（黒い長方形） */
+.dock {
   position: absolute;
-  width: 18%;
-  height: 16%;
-  bottom: 6%;
+  top: var(--dock-top);
+  width: var(--dock-w);
+  height: var(--dock-h);
   background: #111;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25) inset;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25) inset, 0 2px 10px rgba(0,0,0,.2);
   pointer-events: none;
 }
-.bench-left  { left: 8%;  }
-.bench-right { right: 8%; }
+.dock-left  { left: var(--dock-left-left); }
+.dock-right { left: var(--dock-right-left); }
 
-/* === 4×10 ブロック群（ラッパーは触れない） === */
+/* 4×10 ブロック群 */
 .blocks-grid {
   position: absolute;
   top: var(--blocks-top);
   width: var(--blocks-w);
   height: var(--blocks-h);
-
   display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
   grid-template-rows: repeat(var(--rows), 1fr);
   gap: min(0.8vmin, 10px);
   padding: min(1.0vmin, 12px);
-
   background: rgba(0,0,0,0.25);
   border-radius: 8px;
   pointer-events: none;   /* ラッパーはクリック不可 */
 }
-
-/* 左右の配置 */
 .blocks-left  { left: var(--blocks-left-left);  }
 .blocks-right { left: var(--blocks-right-left); }
 
-/* === タップ可能な横長直方体 === */
+/* クリック可能なブロック */
 .block {
-  pointer-events: auto;   /* ←これだけ触れる */
+  pointer-events: auto;
   width: 92%;
-  aspect-ratio: 2.4 / 1;  /* 横長 */
+  aspect-ratio: 2.4 / 1;
   justify-self: center;
   align-self: center;
-
   border-radius: 6px;
   box-shadow:
     0 1px 0 rgba(255,255,255,.6) inset,
@@ -116,11 +139,8 @@
   transition: transform .06s ease, box-shadow .06s ease, filter .06s ease;
   touch-action: manipulation;
 }
-
-/* 色分け（右＝赤系、左＝青系） */
 .block-right { background: #ffc1c1; }
 .block-left  { background: #a7c4ff; }
-
 .block:hover,
 .block:focus-visible {
   outline: none;
@@ -129,19 +149,29 @@
     0 0 0 2px rgba(255,255,255,.6) inset,
     0 4px 10px rgba(0,0,0,.35);
 }
-.block:active {
-  transform: translateY(1px) scale(0.98);
+.block:active { transform: translateY(1px) scale(0.98); }
+
+/* 原点ドット（Dock中心 or カスタム） */
+.origin-dot {
+  position: absolute;
+  width: 12px; height: 12px; border-radius: 999px;
+  background: #fff; border: 2px solid #000;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
 }
 
-/* 画面幅が狭いときは少し内側に寄せる */
+/* 補助 */
+.hint { margin-top: 6px; font-size: 12px; color: #b7dfff; opacity: .85; }
+
+/* レスポンシブ微調整 */
 @media (max-width: 900px) {
   :root {
-    --blocks-right-left: 55%;
-    --blocks-w: 38%;
+    --blocks-right-left: 60%;
+    --blocks-w: 30%;
+    --dock-w: 12%;
   }
 }
-
-/* 画面が低い環境ではさらに圧縮（任意） */
 @media (max-height: 720px) {
   .robot-field { max-height: 52vh; }
 }
