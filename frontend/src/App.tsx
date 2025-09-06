@@ -46,14 +46,17 @@ function App() {
       <header className="App-header">
         <h1>{activeTab === 'competition' ? '競技用' : activeTab === 'debug' ? 'デバッグ用' : 'フィールド表示'}</h1>
 
-        {/* コンテンツエリア */}
         <div className="content-area">
           {activeTab === 'competition' && (
             <div className="competition-layout">
-              <div className="motion-buttons">
-                <button onClick={()=>pressMotion(startMotion)}>Start Motion</button>
-                <button onClick={()=>pressMotion(catchMotion)}>Catch Motion</button>
-                <button onClick={()=>pressMotion(resetMotion)}>Reset Motion</button>
+              {/* ← 左カラム：操作系まとめ */}
+              <div className="left-column">
+                <div className="motion-buttons">
+                  <button onClick={()=>pressMotion(startMotion)}>Start Motion</button>
+                  <button onClick={()=>pressMotion(catchMotion)}>Catch Motion</button>
+                  <button onClick={()=>pressMotion(resetMotion)}>Reset Motion</button>
+                </div>
+
                 <div className="goal-inputs">
                   <span>目標ゴール座標</span>
                   <div className="goal-row">
@@ -63,13 +66,21 @@ function App() {
                     <button onClick={submitGoal}>送信</button>
                   </div>
                 </div>
+
+                <div className="pad-area">
+                  <ControlPad />
+                </div>
               </div>
-              <div className="pad-area">
-                <ControlPad />
+
+              {/* → 右カラム：フィールドをドン！ */}
+              <div className="field-pane">
+                <RobotField />
               </div>
             </div>
           )}
+
           {activeTab === 'debug' && (
+            /* ここは既存のまま */
             <div className="debug-layout">
               <div className="coord-inputs">
                 X:<input value={goal.x} name="x" onChange={handleGoalChange} />
@@ -85,19 +96,20 @@ function App() {
               </div>
             </div>
           )}
+
           {activeTab === 'field' && <RobotField />}
         </div>
+
         <div className="status-message">{message}</div>
 
-        {/* タブナビゲーションバー */}
         <nav className="tab-bar">
           <button className={`tab-button ${activeTab === 'competition' ? 'active' : ''}`} onClick={()=>setActiveTab('competition')}>競技用</button>
           <button className={`tab-button ${activeTab === 'debug' ? 'active' : ''}`} onClick={()=>setActiveTab('debug')}>デバッグ用</button>
-            <button className={`tab-button ${activeTab === 'field' ? 'active' : ''}`} onClick={()=>setActiveTab('field')}>フィールド表示</button>
-         </nav>
-       </header>
-     </div>
-   );
- }
- 
- export default App;
+          <button className={`tab-button ${activeTab === 'field' ? 'active' : ''}`} onClick={()=>setActiveTab('field')}>フィールド表示</button>
+        </nav>
+      </header>
+    </div>
+  );
+}
+
+export default App;

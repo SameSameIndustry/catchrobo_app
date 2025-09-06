@@ -268,3 +268,49 @@
   font-size: 14px;
   color: #61dafb;
 }
+/* === 競技タブにフィールドをレイアウト === */
+.competition-layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 420px) 1fr; /* 左：操作 / 右：フィールド */
+  gap: 32px;
+  align-items: start;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.left-column {
+  display: grid;            /* 縦に整然と配置 */
+  grid-auto-rows: max-content;
+  gap: 16px;
+  justify-items: stretch;
+}
+
+/* フィールド側の箱。中央寄せで余白もたせる */
+.field-pane {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* 競技画面ではフィールドを広めに表示、かつタブを潰さない */
+.competition-layout .robot-field-outer {
+  width: 100%;
+  max-width: none;          /* 右カラムいっぱいに */
+  margin: 0;
+}
+.competition-layout .robot-field {
+  max-height: 52vh;         /* 見出しやタブと干渉しない高さに抑制 */
+}
+
+/* 画面が狭いときは縦積み（操作→フィールドの順） */
+@media (max-width: 1050px) {
+  .competition-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .field-pane {
+    order: 2;
+  }
+}
+
