@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { sendPosition } from '../api/robotAPI';
 import './RobotField.css';
 
@@ -6,94 +6,164 @@ const ROWS = 10;
 const COLS = 4;
 type Side = 'blue' | 'red';
 
-const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+/** ─────────────────────────────────────────────────────────────
+ *  ハードコーディング座標 (mm)：
+ *  フィールド中心 = (0,0)
+ *  赤フィールド：ロボットセット位置 ≈ (845, 0)
+ *  赤の最左上ブロック中心 = (565, -508.4)
+ *  ブロック中心間隔：横 100 / 縦 100
+ *
+ *  インデックスはグリッド内で row-major（0..39）:
+ *    row = Math.floor(i / 4), col = i % 4
+ *  赤は (x, y) = (565 + 100*col, -508.4 + 100*row)
+ *  青は左右対称（x 反転）とし、
+ *    (x, y) = (-(565 + 100*col), -508.4 + 100*row)
+ * ──────────────────────────────────────────────────────────── */
+const RED_COORDS: ReadonlyArray<{ x: number; y: number; z: number }> = [
+  // row 0 (y = -508.4)
+  { x: 565, y: -508.4, z: 0 },
+  { x: 665, y: -508.4, z: 0 },
+  { x: 765, y: -508.4, z: 0 },
+  { x: 865, y: -508.4, z: 0 },
+  // row 1 (y = -408.4)
+  { x: 565, y: -408.4, z: 0 },
+  { x: 665, y: -408.4, z: 0 },
+  { x: 765, y: -408.4, z: 0 },
+  { x: 865, y: -408.4, z: 0 },
+  // row 2 (y = -308.4)
+  { x: 565, y: -308.4, z: 0 },
+  { x: 665, y: -308.4, z: 0 },
+  { x: 765, y: -308.4, z: 0 },
+  { x: 865, y: -308.4, z: 0 },
+  // row 3 (y = -208.4)
+  { x: 565, y: -208.4, z: 0 },
+  { x: 665, y: -208.4, z: 0 },
+  { x: 765, y: -208.4, z: 0 },
+  { x: 865, y: -208.4, z: 0 },
+  // row 4 (y = -108.4)
+  { x: 565, y: -108.4, z: 0 },
+  { x: 665, y: -108.4, z: 0 },
+  { x: 765, y: -108.4, z: 0 },
+  { x: 865, y: -108.4, z: 0 },
+  // row 5 (y =  -8.4)
+  { x: 565, y: -8.4, z: 0 },
+  { x: 665, y: -8.4, z: 0 },
+  { x: 765, y: -8.4, z: 0 },
+  { x: 865, y: -8.4, z: 0 },
+  // row 6 (y =   91.6)
+  { x: 565, y: 91.6, z: 0 },
+  { x: 665, y: 91.6, z: 0 },
+  { x: 765, y: 91.6, z: 0 },
+  { x: 865, y: 91.6, z: 0 },
+  // row 7 (y =  191.6)
+  { x: 565, y: 191.6, z: 0 },
+  { x: 665, y: 191.6, z: 0 },
+  { x: 765, y: 191.6, z: 0 },
+  { x: 865, y: 191.6, z: 0 },
+  // row 8 (y =  291.6)
+  { x: 565, y: 291.6, z: 0 },
+  { x: 665, y: 291.6, z: 0 },
+  { x: 765, y: 291.6, z: 0 },
+  { x: 865, y: 291.6, z: 0 },
+  // row 9 (y =  391.6)
+  { x: 565, y: 391.6, z: 0 },
+  { x: 665, y: 391.6, z: 0 },
+  { x: 765, y: 391.6, z: 0 },
+  { x: 865, y: 391.6, z: 0 },
+];
 
+const BLUE_COORDS: ReadonlyArray<{ x: number; y: number; z: number }> = [
+  // row 0 (y = -508.4)
+  { x: -565, y: -508.4, z: 0 },
+  { x: -665, y: -508.4, z: 0 },
+  { x: -765, y: -508.4, z: 0 },
+  { x: -865, y: -508.4, z: 0 },
+  // row 1 (y = -408.4)
+  { x: -565, y: -408.4, z: 0 },
+  { x: -665, y: -408.4, z: 0 },
+  { x: -765, y: -408.4, z: 0 },
+  { x: -865, y: -408.4, z: 0 },
+  // row 2 (y = -308.4)
+  { x: -565, y: -308.4, z: 0 },
+  { x: -665, y: -308.4, z: 0 },
+  { x: -765, y: -308.4, z: 0 },
+  { x: -865, y: -308.4, z: 0 },
+  // row 3 (y = -208.4)
+  { x: -565, y: -208.4, z: 0 },
+  { x: -665, y: -208.4, z: 0 },
+  { x: -765, y: -208.4, z: 0 },
+  { x: -865, y: -208.4, z: 0 },
+  // row 4 (y = -108.4)
+  { x: -565, y: -108.4, z: 0 },
+  { x: -665, y: -108.4, z: 0 },
+  { x: -765, y: -108.4, z: 0 },
+  { x: -865, y: -108.4, z: 0 },
+  // row 5 (y =  -8.4)
+  { x: -565, y: -8.4, z: 0 },
+  { x: -665, y: -8.4, z: 0 },
+  { x: -765, y: -8.4, z: 0 },
+  { x: -865, y: -8.4, z: 0 },
+  // row 6 (y =   91.6)
+  { x: -565, y: 91.6, z: 0 },
+  { x: -665, y: 91.6, z: 0 },
+  { x: -765, y: 91.6, z: 0 },
+  { x: -865, y: 91.6, z: 0 },
+  // row 7 (y =  191.6)
+  { x: -565, y: 191.6, z: 0 },
+  { x: -665, y: 191.6, z: 0 },
+  { x: -765, y: 191.6, z: 0 },
+  { x: -865, y: 191.6, z: 0 },
+  // row 8 (y =  291.6)
+  { x: -565, y: 291.6, z: 0 },
+  { x: -665, y: 291.6, z: 0 },
+  { x: -765, y: 291.6, z: 0 },
+  { x: -865, y: 291.6, z: 0 },
+  // row 9 (y =  391.6)
+  { x: -565, y: 391.6, z: 0 },
+  { x: -665, y: 391.6, z: 0 },
+  { x: -765, y: 391.6, z: 0 },
+  { x: -865, y: 391.6, z: 0 },
+];
+
+const BlueInitialPosition = { x: 845, y: 0, z: 0 };
+const RedInitialPosition = { x: -845, y: 0, z: 0 };
 const RobotField: React.FC = () => {
   const fieldRef = useRef<HTMLDivElement>(null);
   const dockLeftRef = useRef<HTMLDivElement>(null);
   const dockRightRef = useRef<HTMLDivElement>(null);
 
+  // 以前の要望どおり「左＝赤、右＝青」
   const [side, setSide] = useState<Side>('blue');
-  const [originMode, setOriginMode] = useState<'dock' | 'custom'>('dock');
-  const [origin, setOrigin] = useState<{ x: number; y: number }>({ x: 0.5, y: 0.5 });
 
   const rows = useMemo(() => ROWS, []);
   const cols = useMemo(() => COLS, []);
 
-  // 選択側 Dock の中心（正規化）を計算
-  const computeDockCenter = () => {
-    const field = fieldRef.current;
-    const dock = side === 'blue' ? dockLeftRef.current : dockRightRef.current;
-    if (!field || !dock) return null;
-    const fr = field.getBoundingClientRect();
-    const dr = dock.getBoundingClientRect();
-    const cx = (dr.left + dr.width / 2 - fr.left) / fr.width;
-    const cy = (dr.top + dr.height / 2 - fr.top) / fr.height;
-    return { x: clamp01(cx), y: clamp01(cy) };
-  };
+  /** ブロック押下：インデックス→ハードコーディング座標を送信 */
+  const handleBlockPointerDown =
+    (index: number) => (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const table = side === 'red' ? RED_COORDS.map(
+        coord => ({ x: (coord.x - RedInitialPosition.x)/1000, y: (coord.y - RedInitialPosition.y)/1000, z: (coord.z - RedInitialPosition.z)/1000 })) :
+        BLUE_COORDS.map(coord => ({ x: (coord.x - BlueInitialPosition.x)/1000,  y: (coord.y - BlueInitialPosition.y)/1000, z: (coord.z - BlueInitialPosition.z)/1000 }));
+      const pos = table[index];
+      if (!pos) {
+        console.error('coordinate not found for index', index, 'side=', side);
+        return;
+      }
+      sendPosition(pos)
+        .then((res) => console.log(`sent [${side}] i=${index + 1}`, pos, res))
+        .catch((err) => console.error('sendPosition error', err));
+    };
 
-  // サイド変更時：Dock中心に追従
-  useEffect(() => {
-    if (originMode === 'dock') {
-      const c = computeDockCenter();
-      if (c) setOrigin(c);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [side]);
-
-  // リサイズでも Dock 中心に追従
-  useEffect(() => {
-    if (originMode !== 'dock' || !fieldRef.current) return;
-    const ro = new ResizeObserver(() => {
-      const c = computeDockCenter();
-      if (c) setOrigin(c);
-    });
-    ro.observe(fieldRef.current);
-    return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originMode, side]);
-
-  // ブロック押下で、そのブロックの中心座標（正規化）を送信
-  const handleBlockPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault();
-
-    const field = fieldRef.current;
-    const blockEl = e.currentTarget as HTMLDivElement | null;
-    if (!field || !blockEl) return;
-
-    const fr = field.getBoundingClientRect();
-    const br = blockEl.getBoundingClientRect();
-
-    // ブロック中心の正規化位置（0..1）
-    const cx = (br.left + br.width / 2 - fr.left) / fr.width;
-    const cy = (br.top + br.height / 2 - fr.top) / fr.height;
-
-    const pos = { x: clamp01(cx), y: clamp01(cy), z: 0 };
-    sendPosition(pos)
-      .then((res) => console.log('sent block center', pos, res))
-      .catch((err) => console.error('sendPosition error', err));
-  };
-
-  // 原点 % 入力
-  const handleOriginPercentChange = (axis: 'x' | 'y', v: string) => {
-    const num = Math.min(100, Math.max(0, Number(v)));
-    setOriginMode('custom');
-    setOrigin((prev) => ({ ...prev, [axis]: num / 100 }));
-  };
-
-  const useDockCenter = () => {
-    const c = computeDockCenter();
-    if (c) {
-      setOriginMode('dock');
-      setOrigin(c);
-    }
-  };
-
+  /** グリッド生成（インデックスを描画して可視化） */
   const renderGrid = (which: 'left' | 'right') => {
     const show =
-      (which === 'left' && side === 'blue') || (which === 'right' && side === 'red');
+      (which === 'left' && side === 'red') || (which === 'right' && side === 'blue');
     if (!show) return null;
-    const colorClass = which === 'left' ? 'block-left' : 'block-right';
+
+    // 色クラス：左＝赤系, 右＝青系
+    const colorClass = which === 'left' ? 'block-right' : 'block-left';
+
     return (
       <div
         className={`blocks-grid blocks-${which}`}
@@ -105,16 +175,37 @@ const RobotField: React.FC = () => {
             className={`block ${colorClass}`}
             role="button"
             tabIndex={0}
-            onPointerDown={handleBlockPointerDown}
+            onPointerDown={handleBlockPointerDown(i)}
             onKeyDown={(ke) => {
               if (ke.key === 'Enter' || ke.key === ' ') {
-                // キーボード操作でも同じ処理を走らせる
                 (ke.currentTarget as HTMLDivElement).dispatchEvent(
                   new PointerEvent('pointerdown', { bubbles: true })
                 );
               }
             }}
-          />
+            style={{ position: 'relative' }}
+            aria-label={`index ${i + 1}`}
+            title={`#${i + 1}`}
+          >
+            {/* インデックス表示（中央） */}
+            <span
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#1b1f23',
+                pointerEvents: 'none',
+                userSelect: 'none',
+                opacity: 0.9,
+              }}
+            >
+              {i + 1}
+            </span>
+          </div>
         ))}
       </div>
     );
@@ -124,71 +215,40 @@ const RobotField: React.FC = () => {
     <div className="robot-field-outer">
       <div className="robot-field-title">Field</div>
 
-      {/* トグル & 原点UI */}
+      {/* サイド切替だけ残しています（原点UIなどは不要なので削除） */}
       <div className="field-controls">
         <div className="side-toggle" role="group" aria-label="side toggle">
-          <button
-            className={`side-btn ${side === 'blue' ? 'active' : ''}`}
-            onClick={() => setSide('blue')}
-          >
-            Red
-          </button>
           <button
             className={`side-btn ${side === 'red' ? 'active' : ''}`}
             onClick={() => setSide('red')}
           >
-            Blue
+            Red
           </button>
-        </div>
-
-        <div className="origin-controls">
-          <span className="origin-label">原点</span>
-          <label>
-            X(%)
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={Math.round(origin.x * 100)}
-              onChange={(e) => handleOriginPercentChange('x', e.target.value)}
-            />
-          </label>
-          <label>
-            Y(%)
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={Math.round(origin.y * 100)}
-              onChange={(e) => handleOriginPercentChange('y', e.target.value)}
-            />
-          </label>
-          <button className="bench-center-btn" onClick={useDockCenter}>
-            Dock中心に戻す
+          <button
+            className={`side-btn ${side === 'blue' ? 'active' : ''}`}
+            onClick={() => setSide('blue')}
+          >
+            Blue
           </button>
         </div>
       </div>
 
       <div ref={fieldRef} className="robot-field" aria-label="robot field">
-        {/* 両端の Dock（黒い長方形）— 選択側のみ表示 */}
+        {/* Dock（青=右 / 赤=左）— 見た目だけ残しています */}
         {side === 'blue' ? (
-          <div ref={dockLeftRef} className="dock dock-left" />
-        ) : (
           <div ref={dockRightRef} className="dock dock-right" />
+        ) : (
+          <div ref={dockLeftRef} className="dock dock-left" />
         )}
 
         {/* 4×10 ブロック（片側だけ表示） */}
         {renderGrid('left')}
         {renderGrid('right')}
-
-        {/* 原点可視化（UI用の表示。送信はブロック中心を使用） */}
-        <div
-          className="origin-dot"
-          style={{ left: `${origin.x * 100}%`, top: `${origin.y * 100}%` }}
-        />
       </div>
 
-      <div className="hint">ブロックを押すと、押したブロックの中心座標（正規化）を送信します。</div>
+      <div className="hint">
+        ブロックを押すと、ハードコード済みテーブルの (x,y,z) を送信します（表示番号＝インデックス+1）。
+      </div>
     </div>
   );
 };
