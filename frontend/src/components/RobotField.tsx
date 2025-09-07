@@ -6,6 +6,8 @@ const ROWS = 10;
 const COLS = 4;
 type Side = 'blue' | 'red';
 
+const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
 const RobotField: React.FC = () => {
   const fieldRef = useRef<HTMLDivElement>(null);
   const dockLeftRef = useRef<HTMLDivElement>(null);
@@ -27,7 +29,7 @@ const RobotField: React.FC = () => {
     const dr = dock.getBoundingClientRect();
     const cx = (dr.left + dr.width / 2 - fr.left) / fr.width;
     const cy = (dr.top + dr.height / 2 - fr.top) / fr.height;
-    return { x: cx, y: cy };
+    return { x: clamp01(cx), y: clamp01(cy) };
   };
 
   // サイド変更時：Dock中心に追従
@@ -51,11 +53,24 @@ const RobotField: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originMode, side]);
 
-  // ブロック押下で現在の原点を送信（既定＝Dock中心）
+  // ブロック押下で、そのブロックの中心座標（正規化）を送信
   const handleBlockPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
-    sendPosition({ x: origin.x, y: origin.y, z: 0 })
-      .then((res) => console.log('sent origin', origin, res))
+
+    const field = fieldRef.current;
+    const blockEl = e.currentTarget as HTMLDivElement | null;
+    if (!field || !blockEl) return;
+
+    const fr = field.getBoundingClientRect();
+    const br = blockEl.getBoundingClientRect();
+
+    // ブロック中心の正規化位置（0..1）
+    const cx = (br.left + br.width / 2 - fr.left) / fr.width;
+    const cy = (br.top + br.height / 2 - fr.top) / fr.height;
+
+    const pos = { x: clamp01(cx), y: clamp01(cy), z: 0 };
+    sendPosition(pos)
+      .then((res) => console.log('sent block center', pos, res))
       .catch((err) => console.error('sendPosition error', err));
   };
 
@@ -93,7 +108,8 @@ const RobotField: React.FC = () => {
             onPointerDown={handleBlockPointerDown}
             onKeyDown={(ke) => {
               if (ke.key === 'Enter' || ke.key === ' ') {
-                (ke.target as HTMLDivElement).dispatchEvent(
+                // キーボード操作でも同じ処理を走らせる
+                (ke.currentTarget as HTMLDivElement).dispatchEvent(
                   new PointerEvent('pointerdown', { bubbles: true })
                 );
               }
@@ -115,13 +131,13 @@ const RobotField: React.FC = () => {
             className={`side-btn ${side === 'blue' ? 'active' : ''}`}
             onClick={() => setSide('blue')}
           >
-            Blue
+            Red
           </button>
           <button
             className={`side-btn ${side === 'red' ? 'active' : ''}`}
             onClick={() => setSide('red')}
           >
-            Red
+            Blue
           </button>
         </div>
 
@@ -154,8 +170,6 @@ const RobotField: React.FC = () => {
       </div>
 
       <div ref={fieldRef} className="robot-field" aria-label="robot field">
-        {/* 中央の灰帯 + 点線はCSS背景にて */}
-
         {/* 両端の Dock（黒い長方形）— 選択側のみ表示 */}
         {side === 'blue' ? (
           <div ref={dockLeftRef} className="dock dock-left" />
@@ -167,14 +181,14 @@ const RobotField: React.FC = () => {
         {renderGrid('left')}
         {renderGrid('right')}
 
-        {/* 原点可視化 */}
+        {/* 原点可視化（UI用の表示。送信はブロック中心を使用） */}
         <div
           className="origin-dot"
           style={{ left: `${origin.x * 100}%`, top: `${origin.y * 100}%` }}
         />
       </div>
 
-      <div className="hint">ブロックを押すと「現在の原点（既定＝Dock中心）」を送信します。</div>
+      <div className="hint">ブロックを押すと、押したブロックの中心座標（正規化）を送信します。</div>
     </div>
   );
 };
