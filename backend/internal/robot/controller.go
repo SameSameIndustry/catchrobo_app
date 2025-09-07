@@ -12,6 +12,8 @@ import (
 	std_msgs "msgs/std_msgs/msg"
 
 	"github.com/tiiuae/rclgo/pkg/rclgo"
+	"time"
+	builtin_interfaces "msgs/builtin_interfaces/msg"
 )
 
 // RobotController はROSノードとPublisherを保持します
@@ -28,6 +30,14 @@ type RobotController struct {
 	currentZ float64
 }
 
+func rosNow() builtin_interfaces.Time {
+    t := time.Now()
+    return builtin_interfaces.Time{
+        Sec:     int32(t.Unix()),
+        Nanosec: uint32(t.Nanosecond()),
+    }
+}
+
 // NewController はROSノードとPublisherを初期化し、コントローラーを作成します
 func NewController(_ context.Context) (*RobotController, error) {
 	_, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -41,7 +51,7 @@ func NewController(_ context.Context) (*RobotController, error) {
 	// 文字列をパブリッシュするためのPublisherを作成
 
 	// 位置情報をパブリッシュするためのPublisherを作成
-	posPub, err := node.NewPublisher("/arm_move/goal_pose", geometry_msgs.PoseTypeSupport, nil)
+	posPub, err := node.NewPublisher("/arm_move/goal_pose", geometry_msgs.PoseStampedTypeSupport, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +97,7 @@ func (rc *RobotController) PublishPosition(x, y, z float64) error {
 		return fmt.Errorf("position publisher not initialized")
 	}
 	rc.currentX, rc.currentY, rc.currentZ = x, y, z
-	rosMsg := geometry_msgs.Pose{Position: geometry_msgs.Point{X: x, Y: y, Z: z}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}
+	rosMsg := geometry_msgs.PoseStamped{Header: std_msgs.Header{Stamp: rosNow()}, Pose: geometry_msgs.Pose{Position: geometry_msgs.Point{X: x, Y: y, Z: z}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}}
 
 	// ログを出力し、メッセージをパブリッシュ
 	rc.node.Logger().Info("Publishing position: " + fmt.Sprintf("Position: (%.2f, %.2f, %.2f)", x, y, z))
@@ -148,7 +158,7 @@ func (rc *RobotController) PublishDisplacement(dx, dy, dz float64) error {
 	rc.currentX += dx
 	rc.currentY += dy
 	rc.currentZ += dz
-	rosMsg := geometry_msgs.Pose{Position: geometry_msgs.Point{X: rc.currentX, Y: rc.currentY, Z: rc.currentZ}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}
+	rosMsg := geometry_msgs.PoseStamped{Header: std_msgs.Header{Stamp: rosNow()}, Pose: geometry_msgs.Pose{Position: geometry_msgs.Point{X: rc.currentX, Y: rc.currentY, Z: rc.currentZ}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}}
 	rc.node.Logger().Info("Publishing displacement accumulated -> " + fmt.Sprintf("(%.3f, %.3f, %.3f)", rc.currentX, rc.currentY, rc.currentZ))
 	return rc.positionPub.Publish(&rosMsg)
 }
