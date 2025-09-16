@@ -1,9 +1,11 @@
+// internal/api/robot_handler.go
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
-	// 自分のプロジェクト内のrobotパッケージをインポート
 	"catchrobo_app/internal/robot"
 
 	"github.com/gin-gonic/gin"
@@ -14,12 +16,10 @@ type RobotHandler struct {
 	controller *robot.RobotController
 }
 
-// NewRobotHandler は新しいハンドラを作成します
 func NewRobotHandler(rc *robot.RobotController) *RobotHandler {
 	return &RobotHandler{controller: rc}
 }
 
-// internal/api/robot_handler.go
 type PositionReq struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
@@ -33,7 +33,7 @@ type JointAnglesReq struct {
 type DisplacementReq struct {
 	Dx float64 `json:"dx"`
 	Dy float64 `json:"dy"`
-	Dz float64 `json:"dz"` // 追加: Z 方向
+	Dz float64 `json:"dz"`
 }
 
 func (h *RobotHandler) SendPositionCommand(c *gin.Context) {
@@ -49,21 +49,16 @@ func (h *RobotHandler) SendPositionCommand(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
-// GetTopics は利用可能なトピックのリストを取得します
 func (h *RobotHandler) GetTopics(c *gin.Context) {
-	// RobotControllerのメソッドを呼び出してトピックのリストを取得
 	topics, err := h.controller.SubscribeTopics()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve topics"})
 		return
 	}
-
-	// トピックのリストをJSONレスポンスとして返す
 	c.JSON(http.StatusOK, gin.H{"topics": topics})
 }
 
 func (h *RobotHandler) Hello(c *gin.Context) {
-	// シンプルなHelloレスポンスを返す
 	c.JSON(http.StatusOK, gin.H{"message": "Hello from Robot API!"})
 }
 
@@ -131,4 +126,55 @@ func (h *RobotHandler) SendJointAngles(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+/* ------- Camera Endpoints ------- */
+
+// 単発スナップショット（最新JPEGを返す）
+func (h *RobotHandler) CameraSnapshot(c *gin.Context) {
+	jpg, _ := h.controller.GetLatestJPEG()
+	if len(jpg) == 0 {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "no frame yet"})
+		return
+	}
+	c.Header("Content-Type", "image/jpeg")
+	c.Header("Cache-Control", "no-store")
+	_, _ = c.Writer.Write(jpg)
+}
+
+// MJPEG ストリーム（multipart/x-mixed-replace）
+func (h *RobotHandler) CameraMJPEG(c *gin.Context) {
+	boundary := "frame"
+	c.Header("Content-Type", "multipart/x-mixed-replace; boundary="+boundary)
+	c.Status(http.StatusOK)
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	lastSeq := uint64(0)
+	ticker := time.NewTicker(33 * time.Millisecond) // ~30fps 上限
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-c.Request.Context().Done():
+			return
+		case <-ticker.C:
+			jpg, seq := h.controller.GetLatestJPEG()
+			if len(jpg) == 0 || seq == lastSeq {
+				continue
+			}
+			lastSeq = seq
+
+			_, _ = fmt.Fprintf(c.Writer, "--%s\r\n", boundary)
+			_, _ = fmt.Fprintf(c.Writer, "Content-Type: image/jpeg\r\n")
+			_, _ = fmt.Fprintf(c.Writer, "Content-Length: %d\r\n\r\n", len(jpg))
+			_, _ = c.Writer.Write(jpg)
+			_, _ = fmt.Fprintf(c.Writer, "\r\n")
+			flusher.Flush()
+		}
+	}
 }

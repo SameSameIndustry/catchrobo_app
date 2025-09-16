@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import './App.css';
 import RobotField from './components/RobotField';
 import ControlPad from './components/ControlPad';
-import { sendPosition, sendJointAngles, startMotion,downMotion,upMotion, catchMotion, resetMotion } from './api/robotAPI';
+import CameraView from './components/CameraView';
+import { sendPosition, sendJointAngles, startMotion, downMotion, upMotion, catchMotion, resetMotion } from './api/robotAPI';
 
 // タブの種類を型として定義しておくと、コードが安全になります
-type Tab = 'competition' | 'debug' | 'field';
+type Tab = 'competition' | 'debug' | 'field' | 'camera';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('competition');
@@ -24,27 +25,37 @@ function App() {
     try {
       await sendPosition({ x: parseFloat(goal.x), y: parseFloat(goal.y), z: parseFloat(goal.z) });
       setMessage('Goal sent');
-    } catch (e:any) { setMessage(e.message); }
+    } catch (e: any) { setMessage(e.message); }
   };
 
   const pressMotion = async (fn: () => Promise<any>) => {
-    try { await fn(); setMessage('OK'); } catch(e:any){ setMessage(e.message);} }
-  
-  const handleJointChange = (idx:number, val:string) => {
-    setJointAngles(prev => prev.map((v,i)=> i===idx? val: v));
+    try { await fn(); setMessage('OK'); } catch (e: any) { setMessage(e.message); }
+  };
+
+  const handleJointChange = (idx: number, val: string) => {
+    setJointAngles(prev => prev.map((v, i) => i === idx ? val : v));
   };
 
   const submitJointAngles = async () => {
     try {
-      const angles = jointAngles.map(a => parseFloat(a)||0);
+      const angles = jointAngles.map(a => parseFloat(a) || 0);
       await sendJointAngles(angles);
       setMessage('Joint angles sent');
-    } catch(e:any){ setMessage(e.message);} }
+    } catch (e: any) { setMessage(e.message); }
+  };
 
   return (
     <div className="App">
       <header className="App-header">
-        <h1>{activeTab === 'competition' ? '競技用' : activeTab === 'debug' ? 'デバッグ用' : 'フィールド表示'}</h1>
+        <h1>
+          {activeTab === 'competition'
+            ? '競技用'
+            : activeTab === 'debug'
+              ? 'デバッグ用'
+              : activeTab === 'field'
+                ? 'フィールド表示'
+                : 'カメラ表示'}
+        </h1>
 
         <div className="content-area">
           {activeTab === 'competition' && (
@@ -52,11 +63,11 @@ function App() {
               {/* ← 左カラム：操作系まとめ */}
               <div className="left-column">
                 <div className="motion-buttons">
-                  <button onClick={()=>pressMotion(startMotion)}>Start Motion</button>
-                  <button onClick={()=>pressMotion(catchMotion)}>Catch Motion</button>
-                  <button onClick={()=>pressMotion(resetMotion)}>Reset Motion</button>
-                  <button onClick={()=>pressMotion(downMotion)}>Down Motion</button>
-                  <button onClick={()=>pressMotion(upMotion)}>Up Motion</button>
+                  <button onClick={() => pressMotion(startMotion)}>Start Motion</button>
+                  <button onClick={() => pressMotion(catchMotion)}>Catch Motion</button>
+                  <button onClick={() => pressMotion(resetMotion)}>Reset Motion</button>
+                  <button onClick={() => pressMotion(downMotion)}>Down Motion</button>
+                  <button onClick={() => pressMotion(upMotion)}>Up Motion</button>
                 </div>
 
                 <div className="goal-inputs">
@@ -74,7 +85,7 @@ function App() {
                 </div>
               </div>
 
-              {/* → 右カラム：フィールドをドン！ */}
+              {/* → 右カラム：フィールド */}
               <div className="field-pane">
                 <RobotField />
               </div>
@@ -82,7 +93,6 @@ function App() {
           )}
 
           {activeTab === 'debug' && (
-            /* ここは既存のまま */
             <div className="debug-layout">
               <div className="coord-inputs">
                 X:<input value={goal.x} name="x" onChange={handleGoalChange} />
@@ -91,8 +101,8 @@ function App() {
                 <button onClick={submitGoal}>Move</button>
               </div>
               <div className="joint-inputs">
-                {jointAngles.map((val,i)=>(
-                  <div key={i} className="joint-row">Joint {i+1}: <input value={val} onChange={e=>handleJointChange(i,e.target.value)} /> rad</div>
+                {jointAngles.map((val, i) => (
+                  <div key={i} className="joint-row">Joint {i + 1}: <input value={val} onChange={e => handleJointChange(i, e.target.value)} /> rad</div>
                 ))}
                 <button onClick={submitJointAngles}>Send Joints</button>
               </div>
@@ -100,14 +110,17 @@ function App() {
           )}
 
           {activeTab === 'field' && <RobotField />}
+
+          {activeTab === 'camera' && <CameraView />}
         </div>
 
         <div className="status-message">{message}</div>
 
         <nav className="tab-bar">
-          <button className={`tab-button ${activeTab === 'competition' ? 'active' : ''}`} onClick={()=>setActiveTab('competition')}>競技用</button>
-          <button className={`tab-button ${activeTab === 'debug' ? 'active' : ''}`} onClick={()=>setActiveTab('debug')}>デバッグ用</button>
-          <button className={`tab-button ${activeTab === 'field' ? 'active' : ''}`} onClick={()=>setActiveTab('field')}>フィールド表示</button>
+          <button className={`tab-button ${activeTab === 'competition' ? 'active' : ''}`} onClick={() => setActiveTab('competition')}>競技用</button>
+          <button className={`tab-button ${activeTab === 'debug' ? 'active' : ''}`} onClick={() => setActiveTab('debug')}>デバッグ用</button>
+          <button className={`tab-button ${activeTab === 'field' ? 'active' : ''}`} onClick={() => setActiveTab('field')}>フィールド表示</button>
+          <button className={`tab-button ${activeTab === 'camera' ? 'active' : ''}`} onClick={() => setActiveTab('camera')}>カメラ</button>
         </nav>
       </header>
     </div>
