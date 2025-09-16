@@ -11,8 +11,8 @@ const API_BASE_URL = '/api';
  * @param position 送信する座標データ
  */
 export const sendPosition = async (position: Position): Promise<any> => {
-  // position.z が未指定なら 0 を補完
-  const payload = { x: position.x, y: position.y, z: position.z ?? 0 };
+  // position.z が未指定なら 0.5 を補完
+  const payload = { x: position.x, y: position.y, z: position.z ?? 0.5 };
   try {
     const response = await fetch(`${API_BASE_URL}/position`, {
       method: 'POST',
@@ -46,7 +46,7 @@ export const sendDisplacement = async (displacement: Displacement): Promise<any>
       body: JSON.stringify({
         dx: displacement.dx,
         dy: displacement.dy,
-        dz: displacement.dz ?? 0, // dz を追加、未指定の場合は 0 を補完
+        dz: displacement.dz ?? 0.3, // dz を追加、未指定の場合は 0 を補完
       }),
     });
 
@@ -68,6 +68,18 @@ export const startMotion = async (): Promise<any> => {
   if (!response.ok) throw new Error('Failed start motion');
   return response.json();
 };
+
+export const downMotion = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/down_motion`, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed down motion');
+  return response.json();
+};
+
+export const upMotion = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/up_motion`, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed up motion');
+  return response.json();
+}
 
 /**
  * モーションをキャッチする

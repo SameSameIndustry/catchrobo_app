@@ -23,6 +23,8 @@ type RobotController struct {
 	resetPub       *rclgo.Publisher
 	startPub       *rclgo.Publisher
 	catchMotionPub *rclgo.Publisher
+	upMotionPub    *rclgo.Publisher
+	downMotionPub  *rclgo.Publisher
 	jointAnglesPub *rclgo.Publisher
 	// 現在の目標(累積)位置
 	currentX float64
@@ -71,6 +73,16 @@ func NewController(_ context.Context) (*RobotController, error) {
 		return nil, err
 	}
 
+	upMotionPub, err := node.NewPublisher("/arm_move/up_motion", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+	
+	downMotionPub, err := node.NewPublisher("/arm_move/down_motion", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	jointAnglesPub, err := node.NewPublisher("/arm_move/joint_angles", std_msgs.Float32MultiArrayTypeSupport, nil)
 	if err != nil {
 		return nil, err
@@ -82,6 +94,8 @@ func NewController(_ context.Context) (*RobotController, error) {
 		startPub:       startPub,
 		catchMotionPub: catchMotionPub,
 		resetPub:       resetPub,
+		upMotionPub:    upMotionPub,
+		downMotionPub:  downMotionPub,
 		jointAnglesPub: jointAnglesPub,
 		currentX:       0,
 		currentY:       0,
@@ -97,7 +111,10 @@ func (rc *RobotController) PublishPosition(x, y, z float64) error {
 		return fmt.Errorf("position publisher not initialized")
 	}
 	rc.currentX, rc.currentY, rc.currentZ = x, y, z
-	rosMsg := geometry_msgs.PoseStamped{Header: std_msgs.Header{Stamp: rosNow()}, Pose: geometry_msgs.Pose{Position: geometry_msgs.Point{X: x, Y: y, Z: z}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}}
+	rosMsg := geometry_msgs.PoseStamped{
+		Header: std_msgs.Header{Stamp: rosNow(), FrameId: "base_link"},
+		Pose: geometry_msgs.Pose{Position: geometry_msgs.Point{X: x, Y: y, Z: z}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}},
+	}
 
 	// ログを出力し、メッセージをパブリッシュ
 	rc.node.Logger().Info("Publishing position: " + fmt.Sprintf("Position: (%.2f, %.2f, %.2f)", x, y, z))
@@ -116,6 +133,33 @@ func (rc *RobotController) PublishStartMotion() error {
 	// ログを出力し、メッセージをパブリッシュ
 	rc.node.Logger().Info("Publishing start motion command")
 	return rc.startPub.Publish(&rosMsg)
+}
+
+func (rc *RobotController) PublishUpMotion() error {
+	if rc == nil || rc.node == nil {
+		return fmt.Errorf("node not initialized")
+	}
+	if rc.upMotionPub == nil {
+		return fmt.Errorf("up motion publisher not initialized")
+	}
+	rosMsg := std_msgs.Empty{}
+	
+	// ログを出力し、メッセージをパブリッシュ
+	rc.node.Logger().Info("Publishing up motion command")
+	return rc.upMotionPub.Publish(&rosMsg)
+}
+func (rc *RobotController) PublishDownMotion() error {
+	if rc == nil || rc.node == nil {
+		return fmt.Errorf("node not initialized")
+	}
+	if rc.downMotionPub == nil {
+		return fmt.Errorf("down motion publisher not initialized")
+	}
+	rosMsg := std_msgs.Empty{}
+	
+	// ログを出力し、メッセージをパブリッシュ
+	rc.node.Logger().Info("Publishing down motion command")
+	return rc.downMotionPub.Publish(&rosMsg)
 }
 
 func (rc *RobotController) PublishCatchMotion() error {
@@ -158,7 +202,9 @@ func (rc *RobotController) PublishDisplacement(dx, dy, dz float64) error {
 	rc.currentX += dx
 	rc.currentY += dy
 	rc.currentZ += dz
-	rosMsg := geometry_msgs.PoseStamped{Header: std_msgs.Header{Stamp: rosNow()}, Pose: geometry_msgs.Pose{Position: geometry_msgs.Point{X: rc.currentX, Y: rc.currentY, Z: rc.currentZ}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}}
+	rosMsg := geometry_msgs.PoseStamped{
+		Header: std_msgs.Header{Stamp: rosNow(), FrameId: "base_link"},
+		Pose: geometry_msgs.Pose{Position: geometry_msgs.Point{X: rc.currentX, Y: rc.currentY, Z: rc.currentZ}, Orientation: geometry_msgs.Quaternion{X: 0, Y: 0, Z: 0, W: 1}}}
 	rc.node.Logger().Info("Publishing displacement accumulated -> " + fmt.Sprintf("(%.3f, %.3f, %.3f)", rc.currentX, rc.currentY, rc.currentZ))
 	return rc.positionPub.Publish(&rosMsg)
 }
@@ -194,6 +240,12 @@ func (rc *RobotController) Close() {
 	if rc.catchMotionPub != nil {
 		rc.catchMotionPub.Close()
 	}
+	if rc.upMotionPub != nil {
+		rc.upMotionPub.Close()
+	}
+	if rc.downMotionPub != nil {
+		rc.downMotionPub.Close()
+	}
 	if rc.node != nil {
 		rc.node.Close()
 	}
@@ -210,6 +262,12 @@ func (rc *RobotController) Get(topic_name string) (*rclgo.Publisher, error) {
 		return rc.resetPub, nil
 	case "/catch_motion":
 		return rc.catchMotionPub, nil
+	case "/up_motion":
+		return rc.upMotionPub, nil
+	case "/down_motion":
+		return rc.downMotionPub, nil
+	case "/joint_angles":
+		return rc.jointAnglesPub, nil
 	default:
 		return nil, fmt.Errorf("unknown topic: %s", topic_name)
 	}

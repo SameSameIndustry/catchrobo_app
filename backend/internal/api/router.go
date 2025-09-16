@@ -24,6 +24,8 @@ func SetupRouter(rc *robot.RobotController) *gin.Engine {
 		api.POST("/joint_angles", robotHandler.SendJointAngles)
 		api.GET("/topics", robotHandler.GetTopics)
 		api.POST("/start_motion", robotHandler.StartMotion)
+		api.POST("/down_motion", robotHandler.DownMotion)
+		api.POST("/up_motion", robotHandler.UpMotion)
 		api.POST("/catch_motion", robotHandler.CatchMotion)
 		api.POST("/reset_motion", robotHandler.ResetMotion)
 	}

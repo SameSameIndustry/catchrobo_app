@@ -75,6 +75,22 @@ func (h *RobotHandler) StartMotion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
+func (h *RobotHandler) DownMotion(c *gin.Context) {
+	if err := h.controller.PublishDownMotion(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish down motion failed", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func (h *RobotHandler) UpMotion(c *gin.Context) {
+	if err := h.controller.PublishUpMotion(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish up motion failed", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
 func (h *RobotHandler) CatchMotion(c *gin.Context) {
 	if err := h.controller.PublishCatchMotion(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish catch motion failed", "detail": err.Error()})

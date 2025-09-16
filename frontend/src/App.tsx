@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import './App.css';
 import RobotField from './components/RobotField';
 import ControlPad from './components/ControlPad';
-import { sendPosition, sendJointAngles, startMotion, catchMotion, resetMotion } from './api/robotAPI';
+import { sendPosition, sendJointAngles, startMotion,downMotion,upMotion, catchMotion, resetMotion } from './api/robotAPI';
 
 // タブの種類を型として定義しておくと、コードが安全になります
 type Tab = 'competition' | 'debug' | 'field';
@@ -55,6 +55,8 @@ function App() {
                   <button onClick={()=>pressMotion(startMotion)}>Start Motion</button>
                   <button onClick={()=>pressMotion(catchMotion)}>Catch Motion</button>
                   <button onClick={()=>pressMotion(resetMotion)}>Reset Motion</button>
+                  <button onClick={()=>pressMotion(downMotion)}>Down Motion</button>
+                  <button onClick={()=>pressMotion(upMotion)}>Up Motion</button>
                 </div>
 
                 <div className="goal-inputs">

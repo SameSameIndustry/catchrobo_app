@@ -143,8 +143,8 @@ const RobotField: React.FC = () => {
     (index: number) => (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
       const table = side === 'red' ? RED_COORDS.map(
-        coord => ({ x: (coord.x - RedInitialPosition.x)/1000, y: (coord.y - RedInitialPosition.y)/1000, z: (coord.z - RedInitialPosition.z)/1000 })) :
-        BLUE_COORDS.map(coord => ({ x: (coord.x - BlueInitialPosition.x)/1000,  y: (coord.y - BlueInitialPosition.y)/1000, z: (coord.z - BlueInitialPosition.z)/1000 }));
+        coord => ({ x: (coord.x - RedInitialPosition.x)/1000, y: (coord.y - RedInitialPosition.y)/1000, z: 0.5})) :
+        BLUE_COORDS.map(coord => ({ x: (coord.x - BlueInitialPosition.x)/1000,  y: (coord.y - BlueInitialPosition.y)/1000, z: 0.5 }));
       const pos = table[index];
       if (!pos) {
         console.error('coordinate not found for index', index, 'side=', side);
