@@ -24,6 +24,7 @@ func SetupRouter(rc *robot.RobotController) *gin.Engine {
 		api.POST("/down_motion", robotHandler.DownMotion)
 		api.POST("/up_motion", robotHandler.UpMotion)
 		api.POST("/catch_motion", robotHandler.CatchMotion)
+		api.POST("/release_motion", robotHandler.ReleaseMotion)
 		api.POST("/reset_motion", robotHandler.ResetMotion)
 
 		// ---- Camera ----

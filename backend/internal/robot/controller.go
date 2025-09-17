@@ -30,6 +30,7 @@ type RobotController struct {
 	resetPub       *rclgo.Publisher
 	startPub       *rclgo.Publisher
 	catchMotionPub *rclgo.Publisher
+	releaseMotionPub *rclgo.Publisher
 	upMotionPub    *rclgo.Publisher
 	downMotionPub  *rclgo.Publisher
 	jointAnglesPub *rclgo.Publisher
@@ -80,6 +81,10 @@ func NewController(_ context.Context) (*RobotController, error) {
 	if err != nil {
 		return nil, err
 	}
+	releaseMotionPub, err := node.NewPublisher("/arm_move/release_motion", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
 	resetPub, err := node.NewPublisher("/arm_move/reset_motion", std_msgs.EmptyTypeSupport, nil)
 	if err != nil {
 		return nil, err
@@ -102,6 +107,7 @@ func NewController(_ context.Context) (*RobotController, error) {
 		positionPub:    posPub,
 		startPub:       startPub,
 		catchMotionPub: catchMotionPub,
+		releaseMotionPub: releaseMotionPub,
 		resetPub:       resetPub,
 		upMotionPub:    upMotionPub,
 		downMotionPub:  downMotionPub,
@@ -328,6 +334,18 @@ func (rc *RobotController) PublishCatchMotion() error {
 	return rc.catchMotionPub.Publish(&rosMsg)
 }
 
+func (rc *RobotController) PublishReleaseMotion() error {
+	if rc == nil || rc.node == nil {
+		return fmt.Errorf("node not initialized")
+	}
+	if rc.releaseMotionPub == nil {
+		return fmt.Errorf("release motion publisher not initialized")
+	}
+	rosMsg := std_msgs.Empty{}
+	_ = rc.node.Logger().Infoln("Publishing release motion command")
+	return rc.releaseMotionPub.Publish(&rosMsg)
+}
+
 func (rc *RobotController) PublishResetMotion() error {
 	if rc == nil || rc.node == nil {
 		return fmt.Errorf("node not initialized")
@@ -406,6 +424,9 @@ func (rc *RobotController) Close() {
 	if rc.catchMotionPub != nil {
 		rc.catchMotionPub.Close()
 	}
+	if rc.releaseMotionPub != nil {
+		rc.releaseMotionPub.Close()
+	}
 	if rc.upMotionPub != nil {
 		rc.upMotionPub.Close()
 	}
@@ -427,6 +448,8 @@ func (rc *RobotController) Get(topic_name string) (*rclgo.Publisher, error) {
 		return rc.resetPub, nil
 	case "/catch_motion":
 		return rc.catchMotionPub, nil
+	case "/release_motion":
+		return rc.releaseMotionPub, nil
 	case "/up_motion":
 		return rc.upMotionPub, nil
 	case "/down_motion":

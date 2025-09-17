@@ -73,6 +73,11 @@ export const catchMotion = async (): Promise<any> => {
   if (!response.ok) throw new Error('Failed catch motion');
   return response.json();
 };
+export const releaseMotion = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/release_motion`, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed release motion');
+  return response.json();
+}
 
 export const resetMotion = async (): Promise<any> => {
   const response = await fetch(`${API_BASE_URL}/reset_motion`, { method: 'POST' });

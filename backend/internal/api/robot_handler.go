@@ -94,6 +94,14 @@ func (h *RobotHandler) CatchMotion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
+func (h *RobotHandler) ReleaseMotion(c *gin.Context) {
+	if err := h.controller.PublishReleaseMotion(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish release motion failed", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
 func (h *RobotHandler) ResetMotion(c *gin.Context) {
 	if err := h.controller.PublishResetMotion(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish reset motion failed", "detail": err.Error()})
