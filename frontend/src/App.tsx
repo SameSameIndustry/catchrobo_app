@@ -22,14 +22,26 @@ function App() {
   };
 
   const submitGoal = async () => {
+    const x = parseFloat(goal.x);
+    const y = parseFloat(goal.y);
+    const z = parseFloat(goal.z);
+    setMessage(`Goal送信中 (x=${goal.x}, y=${goal.y}, z=${goal.z}) ...`);
     try {
-      await sendPosition({ x: parseFloat(goal.x), y: parseFloat(goal.y), z: parseFloat(goal.z) });
-      setMessage('Goal sent');
-    } catch (e: any) { setMessage(e.message); }
+      await sendPosition({ x, y, z });
+      setMessage(`Goal送信成功 ✔ (x=${x}, y=${y}, z=${z})`);
+    } catch (e: any) {
+      setMessage(`Goal送信失敗 ✖: ${e.message}`);
+    }
   };
 
-  const pressMotion = async (fn: () => Promise<any>) => {
-    try { await fn(); setMessage('OK'); } catch (e: any) { setMessage(e.message); }
+  const pressMotion = async (label: string, fn: () => Promise<any>) => {
+    setMessage(`${label} 実行中 ...`);
+    try {
+      await fn();
+      setMessage(`${label} 成功 ✔`);
+    } catch (e: any) {
+      setMessage(`${label} 失敗 ✖: ${e.message}`);
+    }
   };
 
   const handleJointChange = (idx: number, val: string) => {
@@ -63,19 +75,19 @@ function App() {
               {/* ← 左カラム：操作系まとめ */}
               <div className="left-column">
                 <div className="motion-buttons">
-                  <button onClick={() => pressMotion(startMotion)}>Start Motion</button>
+                  <button onClick={() => pressMotion('Start Motion', startMotion)}>Start Motion</button>
                   <div className="motion-group">
                     <div className="motion-group-title">グリッパ操作</div>
                     <div className="motion-group-body">
-                      <button onClick={() => pressMotion(catchMotion)}>Catch (掴む)</button>
-                      <button onClick={() => pressMotion(releaseMotion)}>Release (離す)</button>
+                      <button onClick={() => pressMotion('Catch Motion', catchMotion)}>Catch (掴む)</button>
+                      <button onClick={() => pressMotion('Release Motion', releaseMotion)}>Release (離す)</button>
                     </div>
                   </div>
                   <div className="motion-group">
                     <div className="motion-group-title">昇降</div>
                     <div className="motion-group-body">
-                      <button onClick={() => pressMotion(downMotion)}>Down</button>
-                      <button onClick={() => pressMotion(upMotion)}>Up</button>
+                      <button onClick={() => pressMotion('Down Motion', downMotion)}>Down</button>
+                      <button onClick={() => pressMotion('Up Motion', upMotion)}>Up</button>
                     </div>
                   </div>
                 </div>
