@@ -1,6 +1,6 @@
 // frontend/src/App.tsx
 
-import React, { useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import './App.css';
 import RobotField from './components/RobotField';
 import ControlPad from './components/ControlPad';
@@ -15,6 +15,52 @@ function App() {
   const [goal, setGoal] = useState({ x: '', y: '', z: '' });
   const [jointAngles, setJointAngles] = useState<string[]>(['', '', '', '', '', '']);
   const [message, setMessage] = useState<string>('');
+  // Timer state (milliseconds elapsed)
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [running, setRunning] = useState(false);
+  const startRef = useRef<number | null>(null); // performance.now() 起点
+  const rafId = useRef<number | null>(null);
+
+  // Start timer
+  const handleStartTimer = () => {
+    if (running) return;
+    setRunning(true);
+    const base = performance.now() - elapsedMs; // 再開対応
+    startRef.current = base;
+    const loop = () => {
+      if (!startRef.current) return;
+      const now = performance.now();
+      setElapsedMs(now - startRef.current);
+      rafId.current = requestAnimationFrame(loop);
+    };
+    rafId.current = requestAnimationFrame(loop);
+  };
+  const handleStopTimer = () => {
+    if (!running) return;
+    setRunning(false);
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    rafId.current = null;
+  };
+  const handleResetTimer = () => {
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    rafId.current = null;
+    startRef.current = null;
+    setElapsedMs(0);
+    setRunning(false);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => () => { if (rafId.current) cancelAnimationFrame(rafId.current); }, []);
+
+  const formatTime = (ms: number) => {
+    const totalMs = Math.floor(ms);
+    const totalSec = Math.floor(totalMs / 1000);
+    const minutes = Math.floor(totalSec / 60);
+    const seconds = totalSec % 60;
+    const centi = Math.floor((totalMs % 1000) / 10); // 2桁
+    const pad = (n: number, l = 2) => n.toString().padStart(l, '0');
+    return `${pad(minutes)}:${pad(seconds)}.${pad(centi)}`;
+  };
 
   const handleGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -61,13 +107,25 @@ function App() {
       <header className="App-header">
         <h1>
           {activeTab === 'competition'
-            ? '競技用'
+            ? '本番用'
             : activeTab === 'debug'
               ? 'デバッグ用'
               : activeTab === 'field'
                 ? 'フィールド表示'
                 : 'カメラ表示'}
         </h1>
+        {activeTab === 'competition' && (
+          <div className="comp-timer-wrapper">
+            <div className="comp-timer-display" aria-label="competition timer">
+              {formatTime(elapsedMs)}
+            </div>
+            <div className="comp-timer-buttons">
+              <button onClick={handleStartTimer} disabled={running}>Start</button>
+              <button onClick={handleStopTimer} disabled={!running}>Stop</button>
+              <button onClick={handleResetTimer}>Reset</button>
+            </div>
+          </div>
+        )}
 
         <div className="content-area">
           {activeTab === 'competition' && (
@@ -139,7 +197,7 @@ function App() {
         <div className="status-message">{message}</div>
 
         <nav className="tab-bar">
-          <button className={`tab-button ${activeTab === 'competition' ? 'active' : ''}`} onClick={() => setActiveTab('competition')}>競技用</button>
+          <button className={`tab-button ${activeTab === 'competition' ? 'active' : ''}`} onClick={() => setActiveTab('competition')}>本番用</button>
           <button className={`tab-button ${activeTab === 'debug' ? 'active' : ''}`} onClick={() => setActiveTab('debug')}>デバッグ用</button>
           <button className={`tab-button ${activeTab === 'field' ? 'active' : ''}`} onClick={() => setActiveTab('field')}>フィールド表示</button>
           <button className={`tab-button ${activeTab === 'camera' ? 'active' : ''}`} onClick={() => setActiveTab('camera')}>カメラ</button>
