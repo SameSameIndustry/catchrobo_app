@@ -170,7 +170,7 @@
   border: 1px solid #3a4048;
   background: #20252f;
   border-radius: 10px;
-  padding: 10px 12px 14px;
+  padding: 10px 10px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -195,7 +195,7 @@
 }
 .motion-group-body {
   display: grid;
-  gap: 8px;
+  gap: 50px;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 .motion-group-body button {

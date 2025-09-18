@@ -2,7 +2,7 @@
 .control-pad-container {
   border: 1px solid #61dafb;
   border-radius: 8px;
-  padding: 0.0rem 0.65rem 0.7rem; /* 余白を減らす */
+  padding: 0.0rem 5.5rem 0.7rem; /* 余白を減らす */
   margin-top: 0rem;
 }
 
@@ -26,7 +26,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 40px;
+  gap: 60px;
   margin-top: 4px; /* タイトルとの距離を詰める */
 }
 

@@ -150,6 +150,10 @@ function App() {
                   </div>
                 </div>
 
+                <div className="pad-area">
+                  <ControlPad />
+                </div>
+
                 <div className="goal-inputs">
                   <span>目標ゴール座標</span>
                   <div className="goal-row">
@@ -158,10 +162,6 @@ function App() {
                     z:<input name="z" value={goal.z} onChange={handleGoalChange} />
                     <button onClick={submitGoal}>送信</button>
                   </div>
-                </div>
-
-                <div className="pad-area">
-                  <ControlPad />
                 </div>
               </div>
 
