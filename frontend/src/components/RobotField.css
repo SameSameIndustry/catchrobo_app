@@ -56,6 +56,23 @@
 .side-btn { padding: 6px 14px; background: #20232a; color: #cfe9ff; border: none; cursor: pointer; font-size: 14px; }
 .side-btn.active { background: #61dafb; color: #0b2233; }
 
+/* Release button */
+.release-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #3a3f4a;
+  background: #1f2430;
+  color: #e1f5ff;
+  transition: background .15s ease, transform .12s ease;
+}
+.release-btn:hover { filter: brightness(1.08); }
+.release-btn:active { transform: translateY(1px); }
+.release-red { background: #ef4444; color: #fff; }
+.release-blue { background: #2b6cf5; color: #fff; }
+
 .origin-controls { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .origin-label { font-size: 13px; opacity: .8; margin-right: 2px; }
 .origin-controls input {

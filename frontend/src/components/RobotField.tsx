@@ -18,6 +18,9 @@ type Side = 'blue' | 'red';
  * ──────────────────────────────────────────────────────────── */
 type Coord = { x: number; y: number; z: number };
 
+// リリース位置（青基準）。赤は x を符号反転して使用。
+const BLUE_RELEASE_POSITION: Coord = { x: 0.54, y: -0.25, z: 0 };
+
 // 青フィールド座標 (m) - CSV 順序そのまま
 const BLUE_COORDS: ReadonlyArray<Coord> = [
   // row 0 (x = 0.55)
@@ -87,6 +90,17 @@ const RobotField: React.FC = () => {
 
   /** ブロック押下：インデックス→ハードコーディング座標を送信 */
   const [lastGoal, setLastGoal] = useState<null | { side: Side; index: number; x: number; y: number; z: number }>(null);
+
+  const sendReleaseGoal = () => {
+    const base = side === 'red' ? { ...BLUE_RELEASE_POSITION, x: -BLUE_RELEASE_POSITION.x } : BLUE_RELEASE_POSITION;
+    const pos = { x: base.x, y: base.y, z: 0.5 }; // 統一して z=0.5 を送る
+    sendPosition(pos)
+      .then((res) => {
+        console.log(`sent release goal [${side}]`, pos, res);
+        setLastGoal({ side, index: 0, ...pos }); // index 0 は特別（通常ブロック外）
+      })
+      .catch((err) => console.error('sendPosition release error', err));
+  };
 
   const handleBlockPointerDown = (index: number) => (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -194,6 +208,14 @@ const RobotField: React.FC = () => {
             Blue
           </button>
         </div>
+        <button
+          onClick={sendReleaseGoal}
+          className={`release-btn release-${side}`}
+          title="リリース位置へゴール送信"
+          aria-label="send release goal"
+        >
+          Release Goal
+        </button>
       </div>
 
       <div ref={fieldRef} className="robot-field" aria-label="robot field">
