@@ -7,126 +7,73 @@ const COLS = 4;
 type Side = 'blue' | 'red';
 
 /** ─────────────────────────────────────────────────────────────
- *  ハードコーディング座標 (mm)：
- *  フィールド中心 = (0,0)
- *  赤フィールド：ロボットセット位置 ≈ (845, 0)
- *  赤の最左上ブロック中心 = (565, -508.4)
- *  ブロック中心間隔：横 100 / 縦 100
- *
- *  インデックスはグリッド内で row-major（0..39）:
- *    row = Math.floor(i / 4), col = i % 4
- *  赤は (x, y) = (565 + 100*col, -508.4 + 100*row)
- *  青は左右対称（x 反転）とし、
- *    (x, y) = (-(565 + 100*col), -508.4 + 100*row)
+ *  CSV 由来：インデックス(1..40)毎のゴール座標（単位: m）
+ *  与えられた表：
+ *   行方向: x = 0.55,0.45,0.30,0.20,0.05,-0.05,-0.20,-0.30,-0.45,-0.55 (10行)
+ *   列方向: y = 1.00,0.90,0.80,0.70 (4列)
+ *  インデックス = row * 4 + col + 1 （row-major）
+ *  青フィールドをそのまま使用し、赤フィールドは x を符号反転した線対称。
+ *  旧実装(mm) + 初期位置差分計算は廃止し、ここではフィールド原点基準の絶対座標(m)を直接送信。
+ *  z は送信時 0.5m を決め打ち。
  * ──────────────────────────────────────────────────────────── */
-const RED_COORDS: ReadonlyArray<{ x: number; y: number; z: number }> = [
-  // row 0 (y = -508.4)
-  { x: 565, y: -508.4, z: 0 },
-  { x: 665, y: -508.4, z: 0 },
-  { x: 765, y: -508.4, z: 0 },
-  { x: 865, y: -508.4, z: 0 },
-  // row 1 (y = -408.4)
-  { x: 565, y: -408.4, z: 0 },
-  { x: 665, y: -408.4, z: 0 },
-  { x: 765, y: -408.4, z: 0 },
-  { x: 865, y: -408.4, z: 0 },
-  // row 2 (y = -308.4)
-  { x: 565, y: -308.4, z: 0 },
-  { x: 665, y: -308.4, z: 0 },
-  { x: 765, y: -308.4, z: 0 },
-  { x: 865, y: -308.4, z: 0 },
-  // row 3 (y = -208.4)
-  { x: 565, y: -208.4, z: 0 },
-  { x: 665, y: -208.4, z: 0 },
-  { x: 765, y: -208.4, z: 0 },
-  { x: 865, y: -208.4, z: 0 },
-  // row 4 (y = -108.4)
-  { x: 565, y: -108.4, z: 0 },
-  { x: 665, y: -108.4, z: 0 },
-  { x: 765, y: -108.4, z: 0 },
-  { x: 865, y: -108.4, z: 0 },
-  // row 5 (y =  -8.4)
-  { x: 565, y: -8.4, z: 0 },
-  { x: 665, y: -8.4, z: 0 },
-  { x: 765, y: -8.4, z: 0 },
-  { x: 865, y: -8.4, z: 0 },
-  // row 6 (y =   91.6)
-  { x: 565, y: 91.6, z: 0 },
-  { x: 665, y: 91.6, z: 0 },
-  { x: 765, y: 91.6, z: 0 },
-  { x: 865, y: 91.6, z: 0 },
-  // row 7 (y =  191.6)
-  { x: 565, y: 191.6, z: 0 },
-  { x: 665, y: 191.6, z: 0 },
-  { x: 765, y: 191.6, z: 0 },
-  { x: 865, y: 191.6, z: 0 },
-  // row 8 (y =  291.6)
-  { x: 565, y: 291.6, z: 0 },
-  { x: 665, y: 291.6, z: 0 },
-  { x: 765, y: 291.6, z: 0 },
-  { x: 865, y: 291.6, z: 0 },
-  // row 9 (y =  391.6)
-  { x: 565, y: 391.6, z: 0 },
-  { x: 665, y: 391.6, z: 0 },
-  { x: 765, y: 391.6, z: 0 },
-  { x: 865, y: 391.6, z: 0 },
+type Coord = { x: number; y: number; z: number };
+
+// 青フィールド座標 (m) - CSV 順序そのまま
+const BLUE_COORDS: ReadonlyArray<Coord> = [
+  // row 0 (x = 0.55)
+  { x: 0.55, y: 1.0, z: 0 },
+  { x: 0.55, y: 0.9, z: 0 },
+  { x: 0.55, y: 0.8, z: 0 },
+  { x: 0.55, y: 0.7, z: 0 },
+  // row 1 (x = 0.45)
+  { x: 0.45, y: 1.0, z: 0 },
+  { x: 0.45, y: 0.9, z: 0 },
+  { x: 0.45, y: 0.8, z: 0 },
+  { x: 0.45, y: 0.7, z: 0 },
+  // row 2 (x = 0.30)
+  { x: 0.30, y: 1.0, z: 0 },
+  { x: 0.30, y: 0.9, z: 0 },
+  { x: 0.30, y: 0.8, z: 0 },
+  { x: 0.30, y: 0.7, z: 0 },
+  // row 3 (x = 0.20)
+  { x: 0.20, y: 1.0, z: 0 },
+  { x: 0.20, y: 0.9, z: 0 },
+  { x: 0.20, y: 0.8, z: 0 },
+  { x: 0.20, y: 0.7, z: 0 },
+  // row 4 (x = 0.05)
+  { x: 0.05, y: 1.0, z: 0 },
+  { x: 0.05, y: 0.9, z: 0 },
+  { x: 0.05, y: 0.8, z: 0 },
+  { x: 0.05, y: 0.7, z: 0 },
+  // row 5 (x = -0.05)
+  { x: -0.05, y: 1.0, z: 0 },
+  { x: -0.05, y: 0.9, z: 0 },
+  { x: -0.05, y: 0.8, z: 0 },
+  { x: -0.05, y: 0.7, z: 0 },
+  // row 6 (x = -0.20)
+  { x: -0.20, y: 1.0, z: 0 },
+  { x: -0.20, y: 0.9, z: 0 },
+  { x: -0.20, y: 0.8, z: 0 },
+  { x: -0.20, y: 0.7, z: 0 },
+  // row 7 (x = -0.30)
+  { x: -0.30, y: 1.0, z: 0 },
+  { x: -0.30, y: 0.9, z: 0 },
+  { x: -0.30, y: 0.8, z: 0 },
+  { x: -0.30, y: 0.7, z: 0 },
+  // row 8 (x = -0.45)
+  { x: -0.45, y: 1.0, z: 0 },
+  { x: -0.45, y: 0.9, z: 0 },
+  { x: -0.45, y: 0.8, z: 0 },
+  { x: -0.45, y: 0.7, z: 0 },
+  // row 9 (x = -0.55)
+  { x: -0.55, y: 1.0, z: 0 },
+  { x: -0.55, y: 0.9, z: 0 },
+  { x: -0.55, y: 0.8, z: 0 },
+  { x: -0.55, y: 0.7, z: 0 },
 ];
 
-const BLUE_COORDS: ReadonlyArray<{ x: number; y: number; z: number }> = [
-  // row 0 (y = -508.4)
-  { x: -565, y: -508.4, z: 0 },
-  { x: -665, y: -508.4, z: 0 },
-  { x: -765, y: -508.4, z: 0 },
-  { x: -865, y: -508.4, z: 0 },
-  // row 1 (y = -408.4)
-  { x: -565, y: -408.4, z: 0 },
-  { x: -665, y: -408.4, z: 0 },
-  { x: -765, y: -408.4, z: 0 },
-  { x: -865, y: -408.4, z: 0 },
-  // row 2 (y = -308.4)
-  { x: -565, y: -308.4, z: 0 },
-  { x: -665, y: -308.4, z: 0 },
-  { x: -765, y: -308.4, z: 0 },
-  { x: -865, y: -308.4, z: 0 },
-  // row 3 (y = -208.4)
-  { x: -565, y: -208.4, z: 0 },
-  { x: -665, y: -208.4, z: 0 },
-  { x: -765, y: -208.4, z: 0 },
-  { x: -865, y: -208.4, z: 0 },
-  // row 4 (y = -108.4)
-  { x: -565, y: -108.4, z: 0 },
-  { x: -665, y: -108.4, z: 0 },
-  { x: -765, y: -108.4, z: 0 },
-  { x: -865, y: -108.4, z: 0 },
-  // row 5 (y =  -8.4)
-  { x: -565, y: -8.4, z: 0 },
-  { x: -665, y: -8.4, z: 0 },
-  { x: -765, y: -8.4, z: 0 },
-  { x: -865, y: -8.4, z: 0 },
-  // row 6 (y =   91.6)
-  { x: -565, y: 91.6, z: 0 },
-  { x: -665, y: 91.6, z: 0 },
-  { x: -765, y: 91.6, z: 0 },
-  { x: -865, y: 91.6, z: 0 },
-  // row 7 (y =  191.6)
-  { x: -565, y: 191.6, z: 0 },
-  { x: -665, y: 191.6, z: 0 },
-  { x: -765, y: 191.6, z: 0 },
-  { x: -865, y: 191.6, z: 0 },
-  // row 8 (y =  291.6)
-  { x: -565, y: 291.6, z: 0 },
-  { x: -665, y: 291.6, z: 0 },
-  { x: -765, y: 291.6, z: 0 },
-  { x: -865, y: 291.6, z: 0 },
-  // row 9 (y =  391.6)
-  { x: -565, y: 391.6, z: 0 },
-  { x: -665, y: 391.6, z: 0 },
-  { x: -765, y: 391.6, z: 0 },
-  { x: -865, y: 391.6, z: 0 },
-];
-
-const BlueInitialPosition = { x: 845, y: 0, z: 0 };
-const RedInitialPosition = { x: -845, y: 0, z: 0 };
+// 赤フィールドは x 符号反転
+const RED_COORDS: ReadonlyArray<Coord> = BLUE_COORDS.map(c => ({ x: -c.x, y: c.y, z: 0 }));
 const RobotField: React.FC = () => {
   const fieldRef = useRef<HTMLDivElement>(null);
   const dockLeftRef = useRef<HTMLDivElement>(null);
@@ -139,21 +86,25 @@ const RobotField: React.FC = () => {
   const cols = useMemo(() => COLS, []);
 
   /** ブロック押下：インデックス→ハードコーディング座標を送信 */
-  const handleBlockPointerDown =
-    (index: number) => (e: React.PointerEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const table = side === 'red' ? RED_COORDS.map(
-        coord => ({ x: (coord.x - RedInitialPosition.x)/1000, y: (coord.y - RedInitialPosition.y)/1000, z: 0.5})) :
-        BLUE_COORDS.map(coord => ({ x: (coord.x - BlueInitialPosition.x)/1000,  y: (coord.y - BlueInitialPosition.y)/1000, z: 0.5 }));
-      const pos = table[index];
-      if (!pos) {
-        console.error('coordinate not found for index', index, 'side=', side);
-        return;
-      }
-      sendPosition(pos)
-        .then((res) => console.log(`sent [${side}] i=${index + 1}`, pos, res))
-        .catch((err) => console.error('sendPosition error', err));
-    };
+  const [lastGoal, setLastGoal] = useState<null | { side: Side; index: number; x: number; y: number; z: number }>(null);
+
+  const handleBlockPointerDown = (index: number) => (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const table = side === 'red' ? RED_COORDS : BLUE_COORDS;
+    const base = table[index];
+    if (!base) {
+      console.error('coordinate not found for index', index, 'side=', side);
+      return;
+    }
+    // 送信用：z を 0.5m とする
+    const pos = { x: base.x, y: base.y, z: 0.5 };
+    sendPosition(pos)
+      .then((res) => {
+        console.log(`sent [${side}] i=${index + 1}`, pos, res);
+        setLastGoal({ side, index: index + 1, ...pos });
+      })
+      .catch((err) => console.error('sendPosition error', err));
+  };
 
   /** グリッド生成（インデックスを描画して可視化） */
   const renderGrid = (which: 'left' | 'right') => {
@@ -214,6 +165,18 @@ const RobotField: React.FC = () => {
   return (
     <div className="robot-field-outer">
       <div className="robot-field-title">Field</div>
+
+      {/* 最終送信ゴール表示 */}
+      <div style={{ margin: '4px 0 8px', fontSize: '12px', lineHeight: 1.4 }}>
+        {lastGoal ? (
+          <span>
+            最終送信: <strong>{lastGoal.side}</strong> idx #{lastGoal.index} → (
+            x={lastGoal.x.toFixed(3)} m, y={lastGoal.y.toFixed(3)} m, z={lastGoal.z.toFixed(2)} m)
+          </span>
+        ) : (
+          <span>まだゴールは送信されていません。</span>
+        )}
+      </div>
 
       {/* サイド切替だけ残しています（原点UIなどは不要なので削除） */}
       <div className="field-controls">
