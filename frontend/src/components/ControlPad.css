@@ -2,8 +2,8 @@
 .control-pad-container {
   border: 1px solid #61dafb;
   border-radius: 8px;
-  padding: 1rem;
-  margin-top: 1rem;
+  padding: 0.0rem 0.65rem 0.7rem; /* 余白を減らす */
+  margin-top: 0rem;
 }
 
 .control-pad {
@@ -13,11 +13,21 @@
   gap: 5px;
 }
 
+.control-pad-title {
+  margin: 20px;
+  padding: 2px 0 0 0;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 600;
+  text-align: center;
+}
+
 .control-pad-body {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 40px;
+  margin-top: 4px; /* タイトルとの距離を詰める */
 }
 
 .middle-row {
@@ -55,7 +65,7 @@
 .control-button {
   width: 50px;
   height: 50px;
-  font-size: 24px;
+  font-size: 30px;
   cursor: pointer;
   background-color: #61dafb;
   border: none;

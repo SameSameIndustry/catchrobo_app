@@ -157,6 +157,7 @@
   border-radius: 6px;
   border: none;
   font-weight: bold;
+  font-size: 20px;
   cursor: pointer;
 }
 
@@ -203,7 +204,7 @@
   font-weight: 600;
   border-radius: 6px;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: 20px;
   transition: background .15s ease, transform .1s ease;
 }
 .motion-group-body button:hover { background:#347fb5; }
@@ -338,6 +339,7 @@
 }
 .comp-timer-buttons {
   display: flex;
+  font-size: 14px;
   gap: 8px;
 }
 .comp-timer-buttons button {
@@ -346,7 +348,7 @@
   border: 1px solid #46525f;
   padding: 8px 14px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background .15s ease, transform .1s ease, color .15s ease;

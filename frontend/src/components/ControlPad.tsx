@@ -20,7 +20,7 @@ const ControlPad = () => {
 
   return (
     <div className="control-pad-container">
-      <h3>Control Pad</h3>
+      <h3 className='control-pad-title'>Control Pad</h3>
       <div className="control-pad-body">
         <div className="dpad">
           <button className="control-button up"    onMouseDown={() => start(0,1)} onMouseUp={stop} onMouseLeave={stop} onTouchStart={(e)=>{e.preventDefault(); start(0,-1);}} onTouchEnd={stop} style={{gridArea:'up'}}>↑</button>
