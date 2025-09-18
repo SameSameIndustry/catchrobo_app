@@ -5,7 +5,7 @@ import './App.css';
 import RobotField from './components/RobotField';
 import ControlPad from './components/ControlPad';
 import CameraView from './components/CameraView';
-import { sendPosition, sendJointAngles, startMotion, downMotion, upMotion, catchMotion, releaseMotion, resetMotion } from './api/robotAPI';
+import { sendPosition, sendJointAngles, startMotion, downMotion, upMotion, catchMotion, releaseMotion } from './api/robotAPI';
 
 // タブの種類を型として定義しておくと、コードが安全になります
 type Tab = 'competition' | 'debug' | 'field' | 'camera';
@@ -64,11 +64,20 @@ function App() {
               <div className="left-column">
                 <div className="motion-buttons">
                   <button onClick={() => pressMotion(startMotion)}>Start Motion</button>
-                  <button onClick={() => pressMotion(catchMotion)}>Catch Motion</button>
-                  <button onClick={() => pressMotion(releaseMotion)}>Release Motion</button>
-                  <button onClick={() => pressMotion(resetMotion)}>Reset Motion</button>
-                  <button onClick={() => pressMotion(downMotion)}>Down Motion</button>
-                  <button onClick={() => pressMotion(upMotion)}>Up Motion</button>
+                  <div className="motion-group">
+                    <div className="motion-group-title">グリッパ操作</div>
+                    <div className="motion-group-body">
+                      <button onClick={() => pressMotion(catchMotion)}>Catch (掴む)</button>
+                      <button onClick={() => pressMotion(releaseMotion)}>Release (離す)</button>
+                    </div>
+                  </div>
+                  <div className="motion-group">
+                    <div className="motion-group-title">昇降</div>
+                    <div className="motion-group-body">
+                      <button onClick={() => pressMotion(downMotion)}>Down</button>
+                      <button onClick={() => pressMotion(upMotion)}>Up</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="goal-inputs">

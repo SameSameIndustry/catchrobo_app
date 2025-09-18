@@ -147,7 +147,7 @@
 .motion-buttons {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .motion-buttons button {
@@ -163,6 +163,51 @@
 .motion-buttons button:hover {
   background: #52c0e8;
 }
+
+/* Motion grouping */
+.motion-group {
+  border: 1px solid #3a4048;
+  background: #20252f;
+  border-radius: 10px;
+  padding: 10px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.motion-group-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-align: left;
+  color: #9ecff1;
+  position: relative;
+  padding-left: 8px;
+}
+.motion-group-title::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 4px; height: 14px;
+  background: linear-gradient(#61dafb, #2b6cf5);
+  border-radius: 2px;
+}
+.motion-group-body {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+.motion-group-body button {
+  background: #3a8ec9;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  transition: background .15s ease, transform .1s ease;
+}
+.motion-group-body button:hover { background:#347fb5; }
+.motion-group-body button:active { transform: translateY(1px); }
 
 .goal-inputs {
   margin-top: 12px;
