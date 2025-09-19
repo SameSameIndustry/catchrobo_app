@@ -19,7 +19,7 @@ type Side = 'blue' | 'red';
 type Coord = { x: number; y: number; z: number };
 
 // リリース位置（青基準）。赤は x を符号反転して使用。
-const BLUE_RELEASE_POSITION: Coord = { x: 0.54, y: -0.25, z: 0 };
+const BLUE_RELEASE_POSITION: Coord = { x: 0.5325, y: -0.303, z: 0 };
 
 // 青フィールド座標 (m) - CSV 順序そのまま
 const BLUE_COORDS: ReadonlyArray<Coord> = [
