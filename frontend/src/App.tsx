@@ -5,7 +5,7 @@ import './App.css';
 import RobotField from './components/RobotField';
 import ControlPad from './components/ControlPad';
 import CameraView from './components/CameraView';
-import { sendPosition, sendJointAngles, startMotion, downMotion, upMotion, catchMotion, releaseMotion } from './api/robotAPI';
+import { sendPosition, sendJointAngles, startMotion, downMotion, upMotion, catchMotion, releaseMotion, resetMotion } from './api/robotAPI';
 
 // タブの種類を型として定義しておくと、コードが安全になります
 type Tab = 'competition' | 'debug' | 'field' | 'camera';
@@ -102,10 +102,9 @@ function App() {
     } catch (e: any) { setMessage(e.message); }
   };
 
-  // Reset PID 呼び出し（API: POST /api/reset_pid）
-  const resetPid = async (): Promise<any> => {
-    const res = await fetch('/api/reset_pid', { method: 'POST' });
-    if (!res.ok) throw new Error('Failed reset PID');
+  const reset_motion = async (): Promise<any> => {
+    const res = await fetch('/api/reset_motion', { method: 'POST' });
+    if (!res.ok) throw new Error('Failed reset motion');
     return res.json().catch(() => ({}));
   };
 
@@ -142,7 +141,7 @@ function App() {
                 <div className="motion-buttons">
                   <div className="motion-top-row">
                     <button onClick={() => pressMotion('Start Motion', startMotion)}>Start Motion</button>
-                    <button className="reset-pid-btn" onClick={() => pressMotion('Reset PID', resetPid)}>Reset PID</button>
+                    <button className="reset-pid-btn" onClick={() => pressMotion('Reset Motion', resetMotion)}>Reset Motion</button>
                   </div>
                   <div className="motion-group">
                     <div className="motion-group-title">グリッパ操作</div>

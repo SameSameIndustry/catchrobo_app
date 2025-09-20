@@ -85,7 +85,7 @@ func NewController(_ context.Context) (*RobotController, error) {
 	if err != nil {
 		return nil, err
 	}
-	resetPub, err := node.NewPublisher("/reset_pid", std_msgs.EmptyTypeSupport, nil)
+	resetPub, err := node.NewPublisher("/arm_move/reset_motion", std_msgs.EmptyTypeSupport, nil)
 	if err != nil {
 		return nil, err
 	}

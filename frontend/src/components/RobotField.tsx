@@ -11,6 +11,9 @@ type Coord = { x: number; y: number; z: number };
 // リリース位置（青基準）。赤は x を符号反転して使用。
 const BLUE_RELEASE_POSITION: Coord = { x: 0.4825, y: -0.103, z: 0 };
 
+// すべての定数座標に適用する Y 方向オフセット（m 単位）
+const OFFSET_POSITION = 0.05;
+
 // 青フィールド座標 (m) - CSV 順序そのまま
 const BLUE_COORDS: ReadonlyArray<Coord> = [
   // row 0 (x = 0.55)
@@ -65,7 +68,7 @@ const BLUE_COORDS: ReadonlyArray<Coord> = [
   { x: -0.55, y: 0.247, z: 0 },
 ];
 
-// 青フィールド座標 (m) - CSV 順序そのまま
+// 赤フィールド座標 (m) - CSV 順序そのまま
 const RED_COORDS: ReadonlyArray<Coord> = [
   // row 0 (x = 0.55)
   { x: -0.55, y: 0.247, z: 0 },
@@ -119,6 +122,11 @@ const RED_COORDS: ReadonlyArray<Coord> = [
   { x: 0.55, y: 0.547, z: 0 },
 ];
 
+// ── オフセット適用版テーブルとリリース位置（y から OFFSET_POSITION を減算）
+const BLUE_COORDS_OFFSET: ReadonlyArray<Coord> = BLUE_COORDS.map(c => ({ x: c.x, y: c.y - OFFSET_POSITION, z: c.z }));
+const RED_COORDS_OFFSET: ReadonlyArray<Coord> = RED_COORDS.map(c => ({ x: c.x, y: c.y - OFFSET_POSITION, z: c.z }));
+const BLUE_RELEASE_POSITION_OFFSET: Coord = { x: BLUE_RELEASE_POSITION.x, y: BLUE_RELEASE_POSITION.y - OFFSET_POSITION, z: BLUE_RELEASE_POSITION.z };
+
 
 const RobotField: React.FC = () => {
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -135,7 +143,8 @@ const RobotField: React.FC = () => {
   const [lastGoal, setLastGoal] = useState<null | { side: Side; index: number; x: number; y: number; z: number }>(null);
 
   const sendReleaseGoal = () => {
-    const base = side === 'red' ? { ...BLUE_RELEASE_POSITION, x: -BLUE_RELEASE_POSITION.x } : BLUE_RELEASE_POSITION;
+    const baseBlue = BLUE_RELEASE_POSITION_OFFSET;
+    const base = side === 'red' ? { ...baseBlue, x: -baseBlue.x } : baseBlue;
     const pos = { x: base.x, y: base.y, z: 0.5 }; // 統一して z=0.5 を送る
     sendPosition(pos)
       .then((res) => {
@@ -147,7 +156,7 @@ const RobotField: React.FC = () => {
 
   const handleBlockPointerDown = (index: number) => (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const table = side === 'red' ? RED_COORDS : BLUE_COORDS;
+  const table = side === 'red' ? RED_COORDS_OFFSET : BLUE_COORDS_OFFSET;
     const base = table[index];
     if (!base) {
       console.error('coordinate not found for index', index, 'side=', side);
