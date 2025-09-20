@@ -207,7 +207,7 @@
 }
 .motion-group-body {
   display: grid;
-  gap: 50px;
+  gap: 30px;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 .motion-group-body button {

@@ -110,6 +110,30 @@ func (h *RobotHandler) ResetMotion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
+func (h *RobotHandler) AddDownMotion(c *gin.Context) {
+	if err := h.controller.PublishAddDownMotion(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish add down motion failed", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func (h *RobotHandler) AddUpMotion(c *gin.Context) {
+	if err := h.controller.PublishAddUpMotion(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish add up motion failed", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func(h * RobotHandler) MiddleMotion(c *gin.Context) {
+	if err := h.controller.PublishMiddleMotion(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "publish middle motion failed", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
 func (h *RobotHandler) SendDisplacementCommand(c *gin.Context) {
 	var req DisplacementReq
 	if err := c.ShouldBindJSON(&req); err != nil {

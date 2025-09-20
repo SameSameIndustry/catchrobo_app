@@ -33,6 +33,9 @@ type RobotController struct {
 	releaseMotionPub *rclgo.Publisher
 	upMotionPub    *rclgo.Publisher
 	downMotionPub  *rclgo.Publisher
+	addDownMotionPub *rclgo.Publisher
+	addUpMotionPub   *rclgo.Publisher
+	middleMotionPub  *rclgo.Publisher
 	jointAnglesPub *rclgo.Publisher
 
 	// Camera subscriptions (任意: raw / compressed のどちらかが来れば最新JPEGを更新)
@@ -97,6 +100,19 @@ func NewController(_ context.Context) (*RobotController, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	addDownMotionPub, err := node.NewPublisher("/arm_move/add_down_motion", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+	addUpMotionPub, err := node.NewPublisher("/arm_move/add_up_motion", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
+	middleMotionPub, err := node.NewPublisher("/arm_move/middle_motion", std_msgs.EmptyTypeSupport, nil)
+	if err != nil {
+		return nil, err
+	}
 	jointAnglesPub, err := node.NewPublisher("/arm_move/joint_angles", std_msgs.Float32MultiArrayTypeSupport, nil)
 	if err != nil {
 		return nil, err
@@ -111,6 +127,9 @@ func NewController(_ context.Context) (*RobotController, error) {
 		resetPub:       resetPub,
 		upMotionPub:    upMotionPub,
 		downMotionPub:  downMotionPub,
+		addDownMotionPub: addDownMotionPub,
+		addUpMotionPub:   addUpMotionPub,
+		middleMotionPub:  middleMotionPub,
 		jointAnglesPub: jointAnglesPub,
 		currentX:       0,
 		currentY:       0,
@@ -322,6 +341,42 @@ func (rc *RobotController) PublishDownMotion() error {
 	return rc.downMotionPub.Publish(&rosMsg)
 }
 
+func (rc *RobotController) PublishAddDownMotion() error {
+	if rc == nil || rc.node == nil {
+		return fmt.Errorf("node not initialized")
+	}
+	if rc.addDownMotionPub == nil {
+		return fmt.Errorf("add down motion publisher not initialized")
+	}
+	rosMsg := std_msgs.Empty{}
+	_ = rc.node.Logger().Infoln("Publishing add down motion command")
+	return rc.addDownMotionPub.Publish(&rosMsg)
+}
+
+func (rc *RobotController) PublishAddUpMotion() error {
+	if rc == nil || rc.node == nil {
+		return fmt.Errorf("node not initialized")
+	}
+	if rc.addUpMotionPub == nil {
+		return fmt.Errorf("add up motion publisher not initialized")
+	}
+	rosMsg := std_msgs.Empty{}
+	_ = rc.node.Logger().Infoln("Publishing add up motion command")
+	return rc.addUpMotionPub.Publish(&rosMsg)
+}
+
+func (rc *RobotController) PublishMiddleMotion() error {
+	if rc == nil || rc.node == nil {
+		return fmt.Errorf("node not initialized")
+	}
+	if rc.middleMotionPub == nil {
+		return fmt.Errorf("middle motion publisher not initialized")
+	}
+	rosMsg := std_msgs.Empty{}
+	_ = rc.node.Logger().Infoln("Publishing middle motion command")
+	return rc.middleMotionPub.Publish(&rosMsg)
+}
+
 func (rc *RobotController) PublishCatchMotion() error {
 	if rc == nil || rc.node == nil {
 		return fmt.Errorf("node not initialized")
@@ -433,6 +488,15 @@ func (rc *RobotController) Close() {
 	if rc.downMotionPub != nil {
 		rc.downMotionPub.Close()
 	}
+	if rc.addDownMotionPub != nil {
+		rc.addDownMotionPub.Close()
+	}
+	if rc.addUpMotionPub != nil {
+		rc.addUpMotionPub.Close()
+	}
+	if rc.middleMotionPub != nil {
+		rc.middleMotionPub.Close()
+	}
 	if rc.node != nil {
 		rc.node.Close()
 	}
@@ -454,6 +518,12 @@ func (rc *RobotController) Get(topic_name string) (*rclgo.Publisher, error) {
 		return rc.upMotionPub, nil
 	case "/down_motion":
 		return rc.downMotionPub, nil
+	case "/add_down_motion":
+		return rc.addDownMotionPub, nil
+	case "/add_up_motion":
+		return rc.addUpMotionPub, nil
+	case "/middle_motion":
+		return rc.middleMotionPub, nil
 	case "/joint_angles":
 		return rc.jointAnglesPub, nil
 	default:

@@ -5,7 +5,7 @@ import './App.css';
 import RobotField from './components/RobotField';
 import ControlPad from './components/ControlPad';
 import CameraView from './components/CameraView';
-import { sendPosition, sendJointAngles, startMotion, downMotion, upMotion, catchMotion, releaseMotion, resetMotion } from './api/robotAPI';
+import { sendPosition, sendJointAngles, startMotion, downMotion, upMotion, catchMotion, releaseMotion, resetMotion,middleMotion } from './api/robotAPI';
 
 // タブの種類を型として定義しておくと、コードが安全になります
 type Tab = 'competition' | 'debug' | 'field' | 'camera';
@@ -154,6 +154,7 @@ function App() {
                     <div className="motion-group-title">昇降</div>
                     <div className="motion-group-body">
                       <button onClick={() => pressMotion('Down Motion', downMotion)}>Down</button>
+                      <button onClick={() => pressMotion('Middle Motion', middleMotion)}>Middle</button>
                       <button onClick={() => pressMotion('Up Motion', upMotion)}>Up</button>
                     </div>
                   </div>

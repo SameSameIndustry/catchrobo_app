@@ -1,5 +1,6 @@
 // frontend/src/api/robotAPI.ts
 
+import exp from 'constants';
 import { Position, Displacement } from '../types';
 
 const API_BASE_URL = '/api';
@@ -78,6 +79,26 @@ export const releaseMotion = async (): Promise<any> => {
   if (!response.ok) throw new Error('Failed release motion');
   return response.json();
 }
+
+export const addDownMotion = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/add_down_motion`, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed add down motion');
+  return response.json();
+}
+
+export const addUpMotion = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/add_up_motion`, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed add up motion');
+  return response.json();
+}
+
+export const middleMotion = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/middle_motion`, { method: 'POST' });
+  if (!response.ok) throw new Error('Failed middle down motion');
+  return response.json();
+}
+
+
 
 export const resetMotion = async (): Promise<any> => {
   const response = await fetch(`${API_BASE_URL}/reset_motion`, { method: 'POST' });
