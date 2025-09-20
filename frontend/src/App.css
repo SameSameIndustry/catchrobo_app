@@ -150,6 +150,12 @@
   gap: 16px;
 }
 
+/* Start + Reset PID を横並びに */
+.motion-top-row {
+  display: flex;
+  gap: 12px;
+}
+
 .motion-buttons button {
   background: #61dafb;
   color: #000;
@@ -164,6 +170,12 @@
 .motion-buttons button:hover {
   background: #52c0e8;
 }
+
+.reset-pid-btn {
+  background: #f97316; /* orange-500 */
+  color: #fff;
+}
+.reset-pid-btn:hover { background:#ea6a0d; }
 
 /* Motion grouping */
 .motion-group {

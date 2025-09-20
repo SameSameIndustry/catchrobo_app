@@ -102,6 +102,13 @@ function App() {
     } catch (e: any) { setMessage(e.message); }
   };
 
+  // Reset PID 呼び出し（API: POST /api/reset_pid）
+  const resetPid = async (): Promise<any> => {
+    const res = await fetch('/api/reset_pid', { method: 'POST' });
+    if (!res.ok) throw new Error('Failed reset PID');
+    return res.json().catch(() => ({}));
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -133,7 +140,10 @@ function App() {
               {/* ← 左カラム：操作系まとめ */}
               <div className="left-column">
                 <div className="motion-buttons">
-                  <button onClick={() => pressMotion('Start Motion', startMotion)}>Start Motion</button>
+                  <div className="motion-top-row">
+                    <button onClick={() => pressMotion('Start Motion', startMotion)}>Start Motion</button>
+                    <button className="reset-pid-btn" onClick={() => pressMotion('Reset PID', resetPid)}>Reset PID</button>
+                  </div>
                   <div className="motion-group">
                     <div className="motion-group-title">グリッパ操作</div>
                     <div className="motion-group-body">
